@@ -9,7 +9,74 @@
 // @grant        none
 // ==/UserScript==
 
-var translit_data = {"Ё":"YO","Й":"I","Ц":"TS","У":"U","К":"K","Е":"E","Н":"N","Г":"G","Ш":"SH","Щ":"SCH","З":"Z","Х":"H","Ъ":"'","ё":"yo","й":"i","ц":"ts","у":"u","к":"k","е":"e","н":"n","г":"g","ш":"sh","щ":"sch","з":"z","х":"h","ъ":"'","Ф":"F","Ы":"I","В":"V","А":"A","П":"P","Р":"R","О":"O","Л":"L","Д":"D","Ж":"ZH","Э":"E","ф":"f","ы":"i","в":"v","а":"a","п":"p","р":"r","о":"o","л":"l","д":"d","ж":"zh","э":"e","Я":"Ya","Ч":"CH","С":"S","М":"M","И":"I","Т":"T","Ь":"'","Б":"B","Ю":"YU","я":"ya","ч":"ch","с":"s","м":"m","и":"i","т":"t","ь":"'","б":"b","ю":"yu"};
+const translit_data = {
+	"А":"A",
+	"а":"a",
+	"Б":"B",
+	"б":"b",
+	"В":"V",
+	"в":"v",
+	"Г":"G",
+	"г":"g",
+	"Д":"D",
+	"д":"d",
+	"Е":"E",
+	"е":"e",
+	"Ж":"ZH",
+	"ж":"zh",
+	"З":"Z",
+	"з":"z",
+	"И":"I",
+	"и":"i",
+	"Й":"I",
+	"й":"i",
+	"К":"K",
+	"к":"k",
+	"Л":"L",
+	"л":"l",
+	"М":"M",
+	"м":"m",
+	"Н":"N",
+	"н":"n",
+	"О":"O",
+	"о":"o",
+	"П":"P",
+	"п":"p",
+	"Р":"R",
+	"р":"r",
+	"С":"S",
+	"с":"s",
+	"Т":"T",
+	"т":"t",
+	"У":"U",
+	"у":"u",
+	"Ф":"F",
+	"ф":"f",
+	"Х":"H",
+	"х":"h",
+	"Ц":"TS",
+	"ц":"ts",
+	"Ч":"CH",
+	"ч":"ch",
+	"Ш":"SH",
+	"ш":"sh",
+	"Щ":"SCH",
+	"щ":"sch",
+	"Ъ":"'",
+	"ъ":"'",
+	"Ы":"Y",
+	"ы":"y",
+	"Ь":"'",
+	"ь":"'",
+	"Э":"E",
+	"э":"e",
+	"Ю":"YU",
+	"ю":"yu",
+	"Я":"Ya",
+	"я":"ya",
+	"Ё":"E",
+	"ё":"e",
+};
 // https://stackoverflow.com/questions/11404047/transliterating-cyrillic-to-latin-with-javascript-function
 function transliterate(word){
   return word.split('').map(function (char) {
@@ -17,7 +84,12 @@ function transliterate(word){
   }).join("");
 }
 
+function min_string(a, b) {
+  return a < b ? a : b;
+}
+
 function divide_authors_info(authors_raw_list) {
+
     function isNumeric(num){
         return !isNaN(num)
     }
@@ -67,19 +139,62 @@ function divide_authors_info(authors_raw_list) {
 class ElibraryArticleMetadata {
     constructor(url, title, authors, affiliations, type, language,
                 volume, number, year, pages, journal, abstract) {
-        this._url = url;
-        this._title = title;
-        this._authors = authors;
-        this._affiliations = affiliations;
-        this._type = type;
-        this._language = language;
+        this._url = url || '';
+        this._title = title || '';
+        this._authors = authors || '';
+        this._affiliations = affiliations || '';
+        this._type = type || '';
+        this._language = language || '';
 
-        this._volume = volume;
-        this._number = number;
-        this._year = year;
-        this._pages = pages;
-        this._journal = journal;
-        this._abstract = abstract;
+        this._volume = volume || '';
+        this._number = number || '';
+        this._year = year || '';
+        this._pages = pages || '';
+        this._journal = journal || '';
+        this._abstract = abstract || '';
+    }
+
+    /**
+    * @param[in|out] metadata object
+    */
+    static recognize_biblio_metadata_table(table_element, metadata) {
+
+        let value_tags = [
+            ...table_element.querySelectorAll('td')[0].querySelectorAll('font'), // type, language
+            ...table_element.querySelectorAll('td')[2].querySelectorAll('a, font'), // volume, number, year, pages, ...
+        ];
+
+        value_tags.map(n => [n.previousSibling.data.trim(), n.innerText]).forEach((kind_value) => {
+            const [kind, value] = kind_value;
+            // console.log(kind, value);
+
+            if (kind.includes('Тип')) {
+                metadata._type = value
+
+            } else if (kind.includes('Язык')) {
+                metadata._language = value
+
+            } else if (kind.includes('Том')) {
+                metadata._volume = value
+
+            } else if (kind.includes('Номер')) {
+                metadata._number = value
+
+            } else if (kind.includes('Год')) {
+                metadata._year = value
+
+            } else if (kind.includes('Страницы')) {
+                metadata._pages = value
+
+//             } else if (kind.includes('Язык')) {
+//                 metadata._language = value
+            } else {
+                console.log('Not recognized: ', kind, value);
+            }
+        })
+
+        // console.log(metadata);
+        // metadata updated.
     }
 
     static parse(document) {
@@ -98,32 +213,7 @@ class ElibraryArticleMetadata {
         [metadata._authors, metadata._affiliations] = divide_authors_info(authors_raw_list);
 
         const bibl_meta_table = tables[di + 27];
-
-        let [type, language] = bibl_meta_table.querySelectorAll('td')[0].querySelectorAll('font')
-        metadata._type = type.innerText
-        metadata._language = language.innerText
-
-        if (bibl_meta_table.querySelectorAll('td')[2].querySelectorAll('a, font').length == 3) {
-            let [number, year, pages] = bibl_meta_table.querySelectorAll('td')[2].querySelectorAll('a, font')
-            metadata._volume = ''
-            metadata._number = number.innerText
-            metadata._year = year.innerText
-            metadata._pages = pages.innerText}
-        else if (bibl_meta_table.querySelectorAll('td')[2].querySelectorAll('a, font').length >= 4) {
-            let [tom, number, year, pages, ..._] = bibl_meta_table.querySelectorAll('td')[2].querySelectorAll('a, font')
-            //alert(tom.innerText)
-            metadata._volume = tom.innerText
-            metadata._number = number.innerText
-            metadata._year = year.innerText
-            metadata._pages = pages.innerText
-        }
-////        else if (bibl_meta_table.querySelectorAll('td')[2].querySelectorAll('a, font').length == 5) {
-////            let [tom, number, year, pages, _] = bibl_meta_table.querySelectorAll('td')[2].querySelectorAll('a, font')
-////            metadata._volume = tom.innerText
-////            metadata._number = number.innerText
-////            metadata._year = year.innerText
-////            metadata._pages = pages.innerText
-////        }
+        ElibraryArticleMetadata.recognize_biblio_metadata_table(bibl_meta_table, metadata)
 
         metadata._journal = tables[di + 28].querySelector('a').innerText
 
@@ -148,19 +238,19 @@ class ElibraryArticleMetadata {
 
 class BibTexArticleEntry {
     constructor(author, title, journal, year, volume, number, pages, url) {
-        this._author = author;
-        this._title = title;
-        this._journal = journal;
-        this._year = year;
-        this._volume = volume;
-        this._number = number;
-        this._pages = pages;
-        this._url = url;
+        this._author = author || '';
+        this._title = title || '';
+        this._journal = journal || '';
+        this._year = year || '';
+        this._volume = volume || '';
+        this._number = number || '';
+        this._pages = pages || '';
+        this._url = url || '';
     }
 
     static from_elibrary(elibrary_article) {
         let entry = new BibTexArticleEntry()
-        entry._author = elibrary_article._authors
+        entry._author = elibrary_article._authors //elibrary_article._authors.forEach(author => '{' + author + '}').join(' and ')
         entry._title = elibrary_article._title
         entry._journal = elibrary_article._journal
         entry._year = elibrary_article._year
@@ -172,7 +262,9 @@ class BibTexArticleEntry {
     }
 
     get_id() {
-        return transliterate(this._author[0].split(' ')[0]) + '_' + this._year
+        const author = this._author[0]
+        const author_surname = min_string(author.split(' ')[0], author.split(' ')[0]) // Ordinary space (32) or &nbsp; (160)
+        return transliterate(author_surname) + '_' + this._year
     }
 
     get() {
@@ -203,7 +295,7 @@ class BibTexArticleEntry {
         tables[tables.length-3].insertAdjacentHTML("afterend", '<h4>elibrary-RSCI-to-BibTex:</h4>');
     }
     catch (e) {
-        alert("[elibrary-RSCI-to-BibTex] Возникла ошибка при переводе библиографической информации! Подробности см. в консоли разработчика ↓");
+        alert("Скрипт [elibrary-RSCI-to-BibTex] из расширения Tampermonkey.\nВозникла ошибка при извлечении библиографической информации! \nПодробности см. в консоли разработчика (F12) ↓");
         console.error(e);
     }
 })();
