@@ -10,6 +10,9 @@
 // @grant        none
 // ==/UserScript==
 
+// const ENTRY_ID_PREFIX = '';
+const ENTRY_ID_PREFIX = 'own_';
+
 const translit_data = {
     "А":"A", "а":"a", "Б":"B", "б":"b", "В":"V", "в":"v", "Г":"G", "г":"g", "Д":"D", "д":"d",
     "Е":"E", "е":"e", "Ж":"ZH", "ж":"zh", "З":"Z", "з":"z", "И":"I", "и":"i", "Й":"I", "й":"i",
@@ -152,63 +155,127 @@ class ElibraryArticleMetadata {
     }
 }
 
-// ElibraryArticleMetadata.parse(document)
-
-class BibTexArticleEntry {
-    constructor(author, title, journal, year, volume, number, pages, url) {
+class BibTexEntry {
+    constructor(author, title, year, url) {
         this._author = author || '';
         this._title = title || '';
-        this._journal = journal || '';
         this._year = year || '';
-        this._volume = volume || '';
-        this._number = number || '';
-        this._pages = pages || '';
         this._url = url || '';
     }
 
-    static from_elibrary(elibrary_article) {
-        let entry = new BibTexArticleEntry()
-        entry._author = elibrary_article._authors //elibrary_article._authors.forEach(author => '{' + author + '}').join(' and ')
-        entry._title = elibrary_article._title
-        entry._journal = elibrary_article._journal
-        entry._year = elibrary_article._year
-        entry._volume = elibrary_article._volume
-        entry._number = elibrary_article._number
-        entry._pages = elibrary_article._pages
-        entry._url = elibrary_article._url
-        return entry
+    get_id() {
+        const author = this._author[0];
+        const author_surname = min_string(author.split(' ')[0], author.split(' ')[0]) // Ordinary space (32) or &nbsp; (160)
+        // TODO: optionally add 1st word from title.
+        return ENTRY_ID_PREFIX + transliterate(author_surname) + '_' + this._year;
     }
 
-    get_id() {
-        const author = this._author[0]
-        const author_surname = min_string(author.split(' ')[0], author.split(' ')[0]) // Ordinary space (32) or &nbsp; (160)
-        return transliterate(author_surname) + '_' + this._year
+    get_field(field_name, value) {
+        if (value) {
+            return `    ${field_name} = "${value}",\n`;
+        }
+        return '';
     }
 
     get() {
-        let formatted_authors = [...this._author]
-        formatted_authors.forEach(function(part, index){ formatted_authors[index] = '{' + part + '}'})
-        let answer =["@article{" + this.get_id() + ',',
-            '    ' + "author = " + '{' + formatted_authors.join(' and ') + '},',
-            '    ' + "title = " + '\"{' + this._title + '}\",',
-            '    ' + "journal = " + '\"{' + this._journal + '}\",',
-            '    ' + "year = " + this._year  + ',',
-            '    ' + "volume = " + '\"' + this._volume + '\",',
-            '    ' + "number = " + '\"' + this._number + '\",',
-            '    ' + "pages = " + '\"' + this._pages + '\",',
-            '    ' + "url = " + '{' + this._url + '}',
-            '}']
-        return answer.join(' \n')
+        let formatted_authors = this._author.map(author => `{${author}}`).join(' and ');
+        let entry = `@${this.get_entry_type()}{${this.get_id()},\n`;
+        entry += this.get_field('author', formatted_authors);
+        entry += this.get_field('title', this._title);
+        entry += this.get_field('year', this._year);
+        entry += this.get_field('url', this._url);
+        entry = entry.trim().replace(/,$/, '') + '\n}';
+        return entry;
+    }
+
+    get_entry_type() {
+        return 'article'; // По умолчанию, переопределяется в дочерних классах
+    }
+}
+
+class BibTexArticleEntry extends BibTexEntry {
+    constructor(author, title, journal, year, volume, number, pages, url) {
+        super(author, title, year, url);
+        this._journal = journal || '';
+        this._volume = volume || '';
+        this._number = number || '';
+        this._pages = pages || '';
+    }
+
+    static from_elibrary(elibrary_article) {
+        return new BibTexArticleEntry(
+            elibrary_article._authors,
+            elibrary_article._title,
+            elibrary_article._journal,
+            elibrary_article._year,
+            elibrary_article._volume,
+            elibrary_article._number,
+            elibrary_article._pages,
+            elibrary_article._url
+        );
+    }
+
+    get() {
+        let entry = super.get();
+        // entry = entry.replace('@article', '@article');
+        entry = entry.replace('\n}', ',\n');
+        entry += this.get_field('journal', this._journal);
+        entry += this.get_field('volume', this._volume);
+        entry += this.get_field('number', this._number);
+        entry += this.get_field('pages', this._pages);
+        entry = entry.trim().replace(/,$/, '') + '\n}';
+        return entry;
+    }
+}
+
+class BibTexConferenceEntry extends BibTexEntry {
+    constructor(author, title, booktitle, year, pages, url) {
+        super(author, title, year, url);
+        this._booktitle = booktitle || '';
+        this._pages = pages || '';
+    }
+
+    static from_elibrary(elibrary_article) {
+        return new BibTexConferenceEntry(
+            elibrary_article._authors,
+            elibrary_article._title,
+            elibrary_article._journal, // Используем journal как booktitle для конференций
+            elibrary_article._year,
+            elibrary_article._pages,
+            elibrary_article._url
+        );
+    }
+
+    get_entry_type() {
+        return 'inproceedings';
+    }
+
+    get() {
+        let entry = super.get();
+        // entry = entry.replace('@article', '@inproceedings');
+        entry = entry.replace('\n}', ',\n');
+        entry += this.get_field('booktitle', this._booktitle);
+        entry += this.get_field('pages', this._pages);
+        entry = entry.trim().replace(/,$/, '') + '\n}';
+        return entry;
     }
 }
 
 (function() {
     'use strict';
     try {
-        let BibTexEntry = BibTexArticleEntry.from_elibrary(ElibraryArticleMetadata.parse(document)).get();
+        const metadata = ElibraryArticleMetadata.parse(document);
+        let bibtexEntry;
+
+        if (metadata._type.includes('конференци')) {
+            bibtexEntry = BibTexConferenceEntry.from_elibrary(metadata).get();
+        } else {
+            bibtexEntry = BibTexArticleEntry.from_elibrary(metadata).get();
+        }
+
         let tables = document.querySelectorAll('table');
         let p_open = '<p style="font-size: 11px; text-indent: 50px;">';
-        tables[tables.length - 3].insertAdjacentHTML("afterend", p_open + BibTexEntry.replaceAll('\n', '<\p>' + p_open).
+        tables[tables.length - 3].insertAdjacentHTML("afterend", p_open + bibtexEntry.replaceAll('\n', '<\p>' + p_open).
             replaceAll('   ', "&nbsp;&nbsp;&nbsp;&nbsp;") + '<\p>');
         tables[tables.length - 3].insertAdjacentHTML("afterend", '<h4>elibrary-RSCI-to-BibTex:</h4>');
     } catch (e) {
