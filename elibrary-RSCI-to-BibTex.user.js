@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         elibrary-RSCI-to-BibTex
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  Elibrary (Russian Science Citation Index) to BibTex article citation
 // @author       You
 // @match        https://elibrary.ru/item.asp?id=*
@@ -261,6 +261,74 @@ class BibTexConferenceEntry extends BibTexEntry {
     }
 }
 
+function insert_to_page(bibtex_str) {
+    // Создаём контейнер для BibTeX и кнопки
+    const container = document.createElement('div');
+    container.style.margin = '20px 0';
+    container.style.padding = '10px';
+    container.style.border = '1px solid #ccc';
+    container.style.backgroundColor = '#f9f9f9';
+
+    // Добавляем заголовок
+    const header = document.createElement('h4');
+    header.innerText = 'Bibtex для публикации:';
+    header.style.marginTop = '0px';
+    container.appendChild(header);
+
+    // Добавляем текст BibTeX
+    const bibtexPre = document.createElement('pre');
+    bibtexPre.style.whiteSpace = 'pre-wrap';
+    bibtexPre.style.fontSize = '11px';
+    // bibtexPre.style.textIndent = '50px';
+    bibtexPre.innerText = bibtex_str;
+    container.appendChild(bibtexPre);
+
+    // Добавляем кнопку "Скопировать"
+    const copyButton = document.createElement('button');
+    copyButton.innerText = 'Скопировать (или Ctrl+B)';
+    copyButton.style.marginTop = '10px';
+    copyButton.style.padding = '5px 10px';
+    copyButton.style.backgroundColor = '#007bff';
+    copyButton.style.color = '#fff';
+    copyButton.style.border = 'none';
+    copyButton.style.borderRadius = '5px';
+    copyButton.style.cursor = 'pointer';
+
+    copyButton.addEventListener('click', () => {
+        navigator.clipboard.writeText(bibtex_str).then(() => {
+            copyButton.innerText = 'Скопировано!';
+            setTimeout(() => {
+                copyButton.innerText = 'Скопировать';
+            }, 2000);
+        }).catch(err => {
+            console.error('Ошибка при копировании: ', err);
+            copyButton.innerText = 'Ошибка!';
+        });
+    });
+
+    container.appendChild(copyButton);
+
+    // Вставляем контейнер на страницу
+    const tables = document.querySelectorAll('table');
+    tables[tables.length - 3/*3*/].insertAdjacentElement('afterend', container);
+
+    // Добавляем обработчик горячей клавиши Ctrl + B
+    document.addEventListener('keydown', (event) => {
+        if (event.ctrlKey && event.code === 'KeyB') {
+            navigator.clipboard.writeText(bibtex_str).then(() => {
+                copyButton.innerText = 'Скопировано (Ctrl+B)!';
+                setTimeout(() => {
+                    copyButton.innerText = 'Скопировать';
+                }, 2000);
+            }).catch(err => {
+                console.error('Ошибка при копировании: ', err);
+                copyButton.innerText = 'Ошибка!';
+            });
+        }
+    });
+}
+
+
 (function() {
     'use strict';
     try {
@@ -273,11 +341,8 @@ class BibTexConferenceEntry extends BibTexEntry {
             bibtexEntry = BibTexArticleEntry.from_elibrary(metadata).get();
         }
 
-        let tables = document.querySelectorAll('table');
-        let p_open = '<p style="font-size: 11px; text-indent: 50px;">';
-        tables[tables.length - 3].insertAdjacentHTML("afterend", p_open + bibtexEntry.replaceAll('\n', '<\p>' + p_open).
-            replaceAll('   ', "&nbsp;&nbsp;&nbsp;&nbsp;") + '<\p>');
-        tables[tables.length - 3].insertAdjacentHTML("afterend", '<h4>elibrary-RSCI-to-BibTex:</h4>');
+        // Вставляем BibTeX на страницу с интерактивными элементами
+        insert_to_page(bibtexEntry);
     } catch (e) {
         alert("Скрипт [elibrary-RSCI-to-BibTex] из расширения Tampermonkey.\nВозникла ошибка при извлечении библиографической информации! \nПодробности см. в консоли разработчика (F12) ↓");
         console.error(e);
