@@ -77,8 +77,9 @@ function divide_authors_info(authors_raw_list) {
 }
 
 class ElibraryArticleMetadata {
-    constructor(url, title, authors, affiliations, type, language, volume, number, year, pages, journal, abstract) {
+    constructor(url, doi, title, authors, affiliations, type, language, volume, number, year, pages, journal, abstract) {
         this._url = url || '';
+        this._doi = doi || '';
         this._title = title || '';
         this._authors = authors || '';
         this._affiliations = affiliations || '';
@@ -90,6 +91,30 @@ class ElibraryArticleMetadata {
         this._pages = pages || '';
         this._journal = journal || '';
         this._abstract = abstract || '';
+    }
+
+    /**
+    * @param[in|out] metadata object
+    */
+    static recognize_urls_table(table_element, metadata) {
+        // eLIBRARY ID: … , EDN: … , (optional) DOI: …
+        let value_tags = table_element.querySelectorAll('font');
+
+        value_tags.forEach((tag) => {
+        	let kind = tag.previousSibling.data.trim();
+        	let href = tag.children[0].href;
+            if (kind.includes('ID')) {
+            	// Keep plain old URL is EDN is not provided
+                metadata._url = href;
+            } else if (kind.includes('EDN')) {
+            	// Overwrite longer ID-based url with shorter EDN-based url
+                metadata._url = href;
+            } else if (kind.includes('DOI')) {
+                metadata._doi = tag.innerText;
+            } else {
+                console.log('Not recognized url: ', kind, tag.innerText);
+            }
+        });
     }
 
     /**
@@ -115,7 +140,7 @@ class ElibraryArticleMetadata {
             } else if (kind.includes('Страницы')) {
                 metadata._pages = value;
             } else {
-                console.log('Not recognized: ', kind, value);
+                console.log('Not recognized biblio: ', kind, value);
             }
         });
     }
@@ -126,7 +151,9 @@ class ElibraryArticleMetadata {
         let tables = document.querySelectorAll('table');
         let di = -2;
 
-        metadata._url = tables[di + 24].querySelectorAll('td')[1].baseURI;
+        const urls_table = tables[di + 24];
+        ElibraryArticleMetadata.recognize_urls_table(urls_table, metadata);
+
         metadata._title = tables[di + 25].querySelector('.bigtext').innerText;
 
         let authors_raw_list = [];
@@ -156,11 +183,12 @@ class ElibraryArticleMetadata {
 }
 
 class BibTexEntry {
-    constructor(author, title, year, url) {
+    constructor(author, title, year, url, doi) {
         this._author = author || '';
         this._title = title || '';
         this._year = year || '';
         this._url = url || '';
+        this._doi = doi || '';
     }
 
     get_id() {
@@ -170,9 +198,12 @@ class BibTexEntry {
         return ENTRY_ID_PREFIX + transliterate(author_surname) + '_' + this._year;
     }
 
-    get_field(field_name, value) {
+    get_field(field_name, value = null, outcommented = false) {
+        if (value === null) {
+            value = this['_' + field_name];
+        }
         if (value) {
-            return `    ${field_name} = "${value}",\n`;
+            return `${outcommented ? '%' : ' '}   ${field_name} = "${value}",\n`;
         }
         return '';
     }
@@ -181,9 +212,10 @@ class BibTexEntry {
         let formatted_authors = this._author.map(author => `{${author}}`).join(' and ');
         let entry = `@${this.get_entry_type()}{${this.get_id()},\n`;
         entry += this.get_field('author', formatted_authors);
-        entry += this.get_field('title', this._title);
-        entry += this.get_field('year', this._year);
-        entry += this.get_field('url', this._url);
+        entry += this.get_field('title');
+        entry += this.get_field('year');
+        entry += this.get_field('doi');
+        entry += this.get_field('url', null, !!this._doi);
         entry = entry.trim().replace(/,$/, '') + '\n}';
         return entry;
     }
@@ -194,8 +226,8 @@ class BibTexEntry {
 }
 
 class BibTexArticleEntry extends BibTexEntry {
-    constructor(author, title, journal, year, volume, number, pages, url) {
-        super(author, title, year, url);
+    constructor(author, title, journal, year, volume, number, pages, url, doi) {
+        super(author, title, year, url, doi);
         this._journal = journal || '';
         this._volume = volume || '';
         this._number = number || '';
@@ -211,7 +243,8 @@ class BibTexArticleEntry extends BibTexEntry {
             elibrary_article._volume,
             elibrary_article._number,
             elibrary_article._pages,
-            elibrary_article._url
+            elibrary_article._url,
+            elibrary_article._doi
         );
     }
 
@@ -219,18 +252,18 @@ class BibTexArticleEntry extends BibTexEntry {
         let entry = super.get();
         // entry = entry.replace('@article', '@article');
         entry = entry.replace('\n}', ',\n');
-        entry += this.get_field('journal', this._journal);
-        entry += this.get_field('volume', this._volume);
-        entry += this.get_field('number', this._number);
-        entry += this.get_field('pages', this._pages);
+        entry += this.get_field('journal');
+        entry += this.get_field('volume');
+        entry += this.get_field('number');
+        entry += this.get_field('pages');
         entry = entry.trim().replace(/,$/, '') + '\n}';
         return entry;
     }
 }
 
 class BibTexConferenceEntry extends BibTexEntry {
-    constructor(author, title, booktitle, year, pages, url) {
-        super(author, title, year, url);
+    constructor(author, title, booktitle, year, pages, url, doi) {
+        super(author, title, year, url, doi);
         this._booktitle = booktitle || '';
         this._pages = pages || '';
     }
@@ -242,7 +275,8 @@ class BibTexConferenceEntry extends BibTexEntry {
             elibrary_article._journal, // Используем journal как booktitle для конференций
             elibrary_article._year,
             elibrary_article._pages,
-            elibrary_article._url
+            elibrary_article._url,
+            elibrary_article._doi
         );
     }
 
@@ -254,8 +288,8 @@ class BibTexConferenceEntry extends BibTexEntry {
         let entry = super.get();
         // entry = entry.replace('@article', '@inproceedings');
         entry = entry.replace('\n}', ',\n');
-        entry += this.get_field('booktitle', this._booktitle);
-        entry += this.get_field('pages', this._pages);
+        entry += this.get_field('booktitle');
+        entry += this.get_field('pages');
         entry = entry.trim().replace(/,$/, '') + '\n}';
         return entry;
     }
