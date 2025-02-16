@@ -208,15 +208,22 @@ class BibTexEntry {
         return '';
     }
 
+    get_fields() {
+        let formatted_authors = this._author.map(author => author.replace(/*&nbsp;*/' ', ' ').replace(' ', ', ')).map(author => `{${author}}`).join(' and ');
+
+        return [
+            this.get_field('author', formatted_authors),
+            this.get_field('title'),
+            this.get_field('year'),
+            this.get_field('doi'),
+            this.get_field('url', null, !!this._doi),
+        ];
+    }
+
     get() {
-        let formatted_authors = this._author.map(author => `{${author}}`).join(' and ');
         let entry = `@${this.get_entry_type()}{${this.get_id()},\n`;
-        entry += this.get_field('author', formatted_authors);
-        entry += this.get_field('title');
-        entry += this.get_field('year');
-        entry += this.get_field('doi');
-        entry += this.get_field('url', null, !!this._doi);
-        entry = entry.trim().replace(/,$/, '') + '\n}';
+        entry += this.get_fields().filter(s => !!s).join(',\n')
+        entry += '\n}';
         return entry;
     }
 
@@ -248,16 +255,13 @@ class BibTexArticleEntry extends BibTexEntry {
         );
     }
 
-    get() {
-        let entry = super.get();
-        // entry = entry.replace('@article', '@article');
-        entry = entry.replace('\n}', ',\n');
-        entry += this.get_field('journal');
-        entry += this.get_field('volume');
-        entry += this.get_field('number');
-        entry += this.get_field('pages');
-        entry = entry.trim().replace(/,$/, '') + '\n}';
-        return entry;
+    get_fields() {
+        return super.get_fields().concat([
+                    this.get_field('journal'),
+                    this.get_field('volume'),
+                    this.get_field('number'),
+                    this.get_field('pages'),
+                ]);
     }
 }
 
@@ -284,14 +288,13 @@ class BibTexConferenceEntry extends BibTexEntry {
         return 'inproceedings';
     }
 
-    get() {
-        let entry = super.get();
-        // entry = entry.replace('@article', '@inproceedings');
-        entry = entry.replace('\n}', ',\n');
-        entry += this.get_field('booktitle');
-        entry += this.get_field('pages');
-        entry = entry.trim().replace(/,$/, '') + '\n}';
-        return entry;
+    get_fields() {
+        return super.get_fields().concat([
+                    this.get_field('booktitle'),
+                    this.get_field('pages'),
+                    // this.get_field('volume'),
+                    // this.get_field('number'),
+                ]);
     }
 }
 
