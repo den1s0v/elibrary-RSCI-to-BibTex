@@ -101,13 +101,13 @@ class ElibraryArticleMetadata {
         let value_tags = table_element.querySelectorAll('font');
 
         value_tags.forEach((tag) => {
-        	let kind = tag.previousSibling.data.trim();
-        	let href = tag.children[0].href;
+            let kind = tag.previousSibling.data.trim();
+            let href = tag.children[0].href;
             if (kind.includes('ID')) {
-            	// Keep plain old URL is EDN is not provided
+                // Keep plain old URL is EDN is not provided
                 metadata._url = href;
             } else if (kind.includes('EDN')) {
-            	// Overwrite longer ID-based url with shorter EDN-based url
+                // Overwrite longer ID-based url with shorter EDN-based url
                 metadata._url = href;
             } else if (kind.includes('DOI')) {
                 metadata._doi = tag.innerText;
@@ -203,7 +203,7 @@ class BibTexEntry {
             value = this['_' + field_name];
         }
         if (value) {
-            return `${outcommented ? '%' : ' '}   ${field_name} = "${value}",\n`;
+            return `${outcommented ? '%' : ' '}   ${field_name} = {${value}}`;
         }
         return '';
     }
@@ -228,7 +228,7 @@ class BibTexEntry {
     }
 
     get_entry_type() {
-        return 'article'; // По умолчанию, переопределяется в дочерних классах
+        return 'article'; // По умолчанию; переопределяется в дочерних классах
     }
 }
 
