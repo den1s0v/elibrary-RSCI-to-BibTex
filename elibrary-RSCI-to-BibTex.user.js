@@ -130,7 +130,9 @@ class ElibraryArticleMetadata {
             if (kind.includes('Тип')) {
                 metadata._type = value;
             } else if (kind.includes('Язык')) {
-                metadata._language = value;
+                // russian, english
+                let lang = {'русский': 'russian', 'английский': 'english'}[value] || value;
+                metadata._language = lang;
             } else if (kind.includes('Том')) {
                 metadata._volume = value;
             } else if (kind.includes('Номер')) {
@@ -183,12 +185,13 @@ class ElibraryArticleMetadata {
 }
 
 class BibTexEntry {
-    constructor(author, title, year, url, doi) {
+    constructor(author, title, year, url, doi, language) {
         this._author = author || '';
         this._title = title || '';
         this._year = year || '';
         this._url = url || '';
         this._doi = doi || '';
+        this._language = language || '';
     }
 
     get_id() {
@@ -216,7 +219,8 @@ class BibTexEntry {
             this.get_field('title'),
             this.get_field('year'),
             this.get_field('doi'),
-            this.get_field('url', null, !!this._doi),
+            this.get_field('url', null, !!this._doi),  // add URL explicitly only when DOI is absent.
+            this.get_field('language'),
         ];
     }
 
@@ -233,8 +237,8 @@ class BibTexEntry {
 }
 
 class BibTexArticleEntry extends BibTexEntry {
-    constructor(author, title, journal, year, volume, number, pages, url, doi) {
-        super(author, title, year, url, doi);
+    constructor(author, title, journal, year, volume, number, pages, url, doi, language) {
+        super(author, title, year, url, doi, language);
         this._journal = journal || '';
         this._volume = volume || '';
         this._number = number || '';
@@ -251,7 +255,8 @@ class BibTexArticleEntry extends BibTexEntry {
             elibrary_article._number,
             elibrary_article._pages,
             elibrary_article._url,
-            elibrary_article._doi
+            elibrary_article._doi,
+            elibrary_article._language,
         );
     }
 
@@ -266,8 +271,8 @@ class BibTexArticleEntry extends BibTexEntry {
 }
 
 class BibTexConferenceEntry extends BibTexEntry {
-    constructor(author, title, booktitle, year, pages, url, doi) {
-        super(author, title, year, url, doi);
+    constructor(author, title, booktitle, year, pages, url, doi, language) {
+        super(author, title, year, url, doi, language);
         this._booktitle = booktitle || '';
         this._pages = pages || '';
     }
@@ -280,7 +285,8 @@ class BibTexConferenceEntry extends BibTexEntry {
             elibrary_article._year,
             elibrary_article._pages,
             elibrary_article._url,
-            elibrary_article._doi
+            elibrary_article._doi,
+            elibrary_article._language,
         );
     }
 
