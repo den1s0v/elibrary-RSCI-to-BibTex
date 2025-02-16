@@ -196,9 +196,14 @@ class BibTexEntry {
 
     get_id() {
         const author = this._author[0];
-        const author_surname = min_string(author.split(' ')[0], author.split(' ')[0]) // Ordinary space (32) or &nbsp; (160)
-        // TODO: optionally add 1st word from title.
-        return ENTRY_ID_PREFIX + transliterate(author_surname) + '_' + this._year;
+        let author_surname = min_string(author.split(' ')[0], author.split(' ')[0]) // Ordinary space (32) or &nbsp; (160)
+        author_surname = transliterate(author_surname);
+        // Add authors count – 1 for publications with several authors.
+        const et_al = (this._author.length > 1) ? `_and${this._author.length - 1}_` : '';
+        // Add 1st word from title.
+        let title_1st_word = min_string(this._title.split(' ')[0], this._title.split(' ')[0])
+        title_1st_word = transliterate(title_1st_word);
+        return `${ENTRY_ID_PREFIX}${author_surname}${et_al}${this._year}_${title_1st_word}`;
     }
 
     get_field(field_name, value = null, outcommented = false) {
