@@ -77,7 +77,7 @@ function divide_authors_info(authors_raw_list) {
 }
 
 class ElibraryArticleMetadata {
-    constructor(url, doi, title, authors, affiliations, type, language, volume, number, year, pages, journal, abstract, publisher) {
+    constructor(url, doi, title, authors, affiliations, type, language, volume, number, year, pages, journal, abstract, publisher, holder, reqnumber, publdate, regdate, prnumber) {
         this._url = url || '';
         this._doi = doi || '';
         this._title = title || '';
@@ -92,6 +92,11 @@ class ElibraryArticleMetadata {
         this._journal = journal || '';
         this._abstract = abstract || '';
         this._publisher = publisher || '';
+        this._holder = holder || '';
+        this._reqnumber = reqnumber || '';
+        this._publdate = publdate || '';
+        this._regdate = regdate || '';
+        this._prnumber = prnumber || '';
     }
 
     /**
@@ -122,14 +127,30 @@ class ElibraryArticleMetadata {
     * @param[in|out] metadata object
     */
     static recognize_biblio_metadata_table(table_element, metadata) {
-        let value_tags = [
-            ...table_element.querySelectorAll('td')[0].querySelectorAll('font'), // type, language
-            ...table_element.querySelectorAll('td')[2].querySelectorAll('a, font'), // volume, number, year, pages, ...
-        ];
+        let value_tags = [...table_element.querySelectorAll('a, font')];
 
-        value_tags.map(n => [n.previousSibling.data.trim(), n.innerText]).forEach(([kind, value]) => {
+        value_tags.map(n => [n.previousSibling?.data.trim(), n.innerText]).forEach(([kind, value]) => {
+            if (!kind) {
+                return;  // Skip inappropriate element.
+            }
+
+            kind = kind.replace(' ', ' ');  // &nbsp; → space
+
             if (kind.includes('Тип')) {
                 metadata._type = value;
+            } else if (kind.includes('Язык программирования')) {
+                ;  // skip
+            } else if (kind.includes('Номер свидетельства')) {
+                metadata._prnumber = value;
+            } else if (kind.includes('Номер заявки')) {
+                metadata._reqnumber = value;
+            } else if (kind.includes('Правообладател')) {
+                metadata._holder = value.trim();
+            } else if (kind.includes('Дата регистрации')) {
+                metadata._regdate = value;
+            } else if (kind.includes('Дата публикации')) {
+                metadata._publdate = value;
+
             } else if (kind.includes('Язык')) {
                 // russian, english
                 let lang = {'русский': 'russian', 'английский': 'english'}[value] || value;
@@ -228,11 +249,13 @@ class BibTexEntry {
         return '';
     }
 
-    get_fields() {
-        let formatted_authors = this._author.map(author => author.replace(/*&nbsp;*/' ', ' ').replace(' ', ', ')).map(author => `{${author}}`).join(' and ');
+    get_authors_formatted() {
+        return this._author.map(author => author.replace(/*&nbsp;*/' ', ' ').replace(' ', ', ')).map(author => `{${author}}`).join(' and ');
+    }
 
+    get_fields() {
         return [
-            this.get_field('author', formatted_authors),
+            this.get_field('author', this.get_authors_formatted()),
             this.get_field('title'),
             this.get_field('year'),
             this.get_field('doi'),
@@ -324,6 +347,73 @@ class BibTexConferenceEntry extends BibTexEntry {
     }
 }
 
+/**
+ * Example (see: https://github.com/AndreyAkinshin/Russian-Phd-LaTeX-Dissertation-Template/blob/master/biblio/registered.bib):
+ * @Patent{progbib1,
+ *   heading =      {Свидетельство о гос. регистрации программы для {ЭВМ}},
+ *   author =       {Петров, П. П.},
+ *   title =        {foobar},
+ *   media =        {text},  // ??
+ *   holder =       {НИИ~ГДААДАВБА},
+ *   reqnumber =    1234567890,  // {req}uest, Номер заявки
+ *   publdate =     {2020-01-02},  // Дата публикации
+ *   date =         {2020-01-01},  // Дата регистрации
+ *   prnumber =     1234567890,  // Номер свидетельства
+ *   prcountry =    {countryru},
+ *   language =     {russian},
+ *   authorprogram ={yes},
+ * }
+ * */
+class BibTexPatentProgramEntry extends BibTexEntry {
+    constructor(author, title, year, url, /*doi, language, publisher,*/
+        holder, reqnumber, publdate, regdate, prnumber) {
+        super(author, title, year, url, /*doi, language, publisher*/);
+        this._holder = holder || '';
+        this._reqnumber = reqnumber || '';
+        this._publdate = publdate || '';
+        this._date = regdate || '';
+        this._prnumber = prnumber || '';
+    }
+
+    static from_elibrary(elibrary_article) {
+        return new BibTexPatentProgramEntry(
+            elibrary_article._authors,
+            elibrary_article._title,
+            elibrary_article._year,
+            elibrary_article._url,
+            // Specific ↓
+            elibrary_article._holder,
+            elibrary_article._reqnumber,
+            elibrary_article._publdate,
+            elibrary_article._regdate,
+            elibrary_article._prnumber,
+        );
+    }
+
+    get_entry_type() {
+        return 'Patent';
+    }
+
+    get_fields() {
+        return [
+                this.get_field('heading', 'Свидетельство о гос. регистрации программы для {ЭВМ}'),
+                // ...super.get_fields(),
+                this.get_field('author', this.get_authors_formatted()),
+                this.get_field('title'),
+
+                this.get_field('holder'),
+                this.get_field('reqnumber'),
+                this.get_field('publdate'),
+                this.get_field('date'),
+                this.get_field('prnumber'),
+
+                this.get_field('url'),
+                this.get_field('language'),
+                this.get_field('authorprogram', 'yes'),
+        ];
+    }
+}
+
 function insert_to_page(bibtex_str) {
     // Создаём контейнер для BibTeX и кнопки
     const container = document.createElement('div');
@@ -400,8 +490,12 @@ function insert_to_page(bibtex_str) {
 
         if (metadata._type.includes('конференци')) {
             bibtexEntry = BibTexConferenceEntry.from_elibrary(metadata).get();
-        } else {
+        } else if (metadata._type.includes('журнал')) {
             bibtexEntry = BibTexArticleEntry.from_elibrary(metadata).get();
+        } else if (metadata._type.includes('свидетельство о государственной регистрации')) {
+            bibtexEntry = BibTexPatentProgramEntry.from_elibrary(metadata).get();
+        } else {
+            console.log('Kind of the publication is not recognized!!! —', metadata._type);
         }
 
         // Вставляем BibTeX на страницу с интерактивными элементами
