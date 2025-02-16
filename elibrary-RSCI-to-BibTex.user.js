@@ -496,6 +496,7 @@ function insert_to_page(bibtex_str) {
             bibtexEntry = BibTexPatentProgramEntry.from_elibrary(metadata).get();
         } else {
             console.log('Kind of the publication is not recognized!!! —', metadata._type);
+            return;
         }
 
         // Вставляем BibTeX на страницу с интерактивными элементами
