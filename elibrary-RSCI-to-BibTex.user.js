@@ -77,7 +77,7 @@ function divide_authors_info(authors_raw_list) {
 }
 
 class ElibraryArticleMetadata {
-    constructor(url, doi, title, authors, affiliations, type, language, volume, number, year, pages, journal, abstract) {
+    constructor(url, doi, title, authors, affiliations, type, language, volume, number, year, pages, journal, abstract, publisher) {
         this._url = url || '';
         this._doi = doi || '';
         this._title = title || '';
@@ -91,6 +91,7 @@ class ElibraryArticleMetadata {
         this._pages = pages || '';
         this._journal = journal || '';
         this._abstract = abstract || '';
+        this._publisher = publisher || '';
     }
 
     /**
@@ -167,31 +168,42 @@ class ElibraryArticleMetadata {
         const bibl_meta_table = tables[di + 27];
         ElibraryArticleMetadata.recognize_biblio_metadata_table(bibl_meta_table, metadata);
 
-        metadata._journal = tables[di + 28].querySelector('a').innerText;
+        const journal_table = tables[di + 28];
+        const table_caption = journal_table.querySelector('td font').innerText;
+        if (table_caption.includes('ЖУРНАЛ') || table_caption.includes('ИСТОЧНИК')) {
 
-        let tbl = tables[di + 29];
-        if (tbl.querySelectorAll('td')[0].innerText === 'АННОТАЦИЯ:') {
-            metadata._abstract = tbl.querySelectorAll('td')[2].innerText;
+            metadata._journal = journal_table.querySelector('a').innerText;
+
+            let publisher = journal_table.querySelectorAll('tr')[1].querySelector('td font');
+            if (publisher && publisher.previousSibling.data.trim().includes('Издательство')) {
+                metadata._publisher = publisher.innerText;
+            }
         }
 
-        // try next one
-        tbl = tables[di + 30];
-        if (tbl.querySelectorAll('td')[0].innerText === 'АННОТАЦИЯ:') {
-            metadata._abstract = tbl.querySelectorAll('td')[2].innerText;
-        }
+        // let tbl = tables[di + 29];
+        // if (tbl.querySelectorAll('td')[0].innerText === 'АННОТАЦИЯ:') {
+        //     metadata._abstract = tbl.querySelectorAll('td')[2].innerText;
+        // }
+
+        // // try next one
+        // tbl = tables[di + 30];
+        // if (tbl.querySelectorAll('td')[0].innerText === 'АННОТАЦИЯ:') {
+        //     metadata._abstract = tbl.querySelectorAll('td')[2].innerText;
+        // }
 
         return metadata;
     }
 }
 
 class BibTexEntry {
-    constructor(author, title, year, url, doi, language) {
+    constructor(author, title, year, url, doi, language, publisher) {
         this._author = author || '';
         this._title = title || '';
         this._year = year || '';
         this._url = url || '';
         this._doi = doi || '';
         this._language = language || '';
+        this._publisher = publisher || '';
     }
 
     get_id() {
@@ -226,6 +238,7 @@ class BibTexEntry {
             this.get_field('doi'),
             this.get_field('url', null, !!this._doi),  // add URL explicitly only when DOI is absent.
             this.get_field('language'),
+            this.get_field('publisher'),
         ];
     }
 
@@ -242,8 +255,8 @@ class BibTexEntry {
 }
 
 class BibTexArticleEntry extends BibTexEntry {
-    constructor(author, title, journal, year, volume, number, pages, url, doi, language) {
-        super(author, title, year, url, doi, language);
+    constructor(author, title, journal, year, volume, number, pages, url, doi, language, publisher) {
+        super(author, title, year, url, doi, language, publisher);
         this._journal = journal || '';
         this._volume = volume || '';
         this._number = number || '';
@@ -262,6 +275,7 @@ class BibTexArticleEntry extends BibTexEntry {
             elibrary_article._url,
             elibrary_article._doi,
             elibrary_article._language,
+            elibrary_article._publisher,
         );
     }
 
@@ -276,8 +290,8 @@ class BibTexArticleEntry extends BibTexEntry {
 }
 
 class BibTexConferenceEntry extends BibTexEntry {
-    constructor(author, title, booktitle, year, pages, url, doi, language) {
-        super(author, title, year, url, doi, language);
+    constructor(author, title, booktitle, year, pages, url, doi, language, publisher) {
+        super(author, title, year, url, doi, language, publisher);
         this._booktitle = booktitle || '';
         this._pages = pages || '';
     }
@@ -292,6 +306,7 @@ class BibTexConferenceEntry extends BibTexEntry {
             elibrary_article._url,
             elibrary_article._doi,
             elibrary_article._language,
+            elibrary_article._publisher,
         );
     }
 
