@@ -319,7 +319,7 @@ function insert_to_page(bibtex_str) {
 
     // Добавляем заголовок
     const header = document.createElement('h4');
-    header.innerText = 'Bibtex для публикации:';
+    header.innerText = 'Bibtex для этой публикации:';
     header.style.marginTop = '0px';
     container.appendChild(header);
 
@@ -333,7 +333,7 @@ function insert_to_page(bibtex_str) {
 
     // Добавляем кнопку "Скопировать"
     const copyButton = document.createElement('button');
-    copyButton.innerText = 'Скопировать (или Ctrl+B)';
+    copyButton.innerText = 'Скопировать (Ctrl+B)';
     copyButton.style.marginTop = '10px';
     copyButton.style.padding = '5px 10px';
     copyButton.style.backgroundColor = '#007bff';
