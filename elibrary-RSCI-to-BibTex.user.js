@@ -4,8 +4,7 @@
 // @version      0.3
 // @description  Elibrary (Russian Science Citation Index) to BibTex article citation
 // @author       You
-// @match        https://elibrary.ru/item.asp?id=*
-// @match        https://www.elibrary.ru/item.asp?id=*
+// @match        https://*elibrary.ru/item.asp?id=*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=tampermonkey.net
 // @grant        none
 // ==/UserScript==
