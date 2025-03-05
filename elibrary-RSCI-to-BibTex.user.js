@@ -5,6 +5,8 @@
 // @description  Elibrary (Russian Science Citation Index) to BibTex article citation
 // @author       You
 // @match        https://*elibrary.ru/item.asp?id=*
+// @match        https://*elibrary.ru/author_items.asp
+// @match        https://*elibrary.ru/author_items.asp?authorid=*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=tampermonkey.net
 // @grant        none
 // ==/UserScript==
@@ -31,6 +33,41 @@ function transliterate(word) {
 function min_string(a, b) {
     return a < b ? a : b;
 }
+
+
+const DAY_MILLISECONDS = 24 * 60 * 60 * 1000; /* 24 часа */
+
+class CacheManager {
+    static getCacheKey(url) {
+        return `tmpbib_${url}`;
+    }
+
+    static getCache(url, _force_drop = false) {
+        // (Debugging: switch _force_drop = 1 to clear and force recalc cached entries on next page load.)
+        const cacheKey = this.getCacheKey(url);
+        const cachedData = localStorage.getItem(cacheKey);
+        if (cachedData) {
+            const { data, expires_at } = JSON.parse(cachedData);
+            const now = Date.now();  // Timestamp in milliseconds.
+            if (now < expires_at && !_force_drop) {
+                return data; // Данные актуальны
+            } else {
+                localStorage.removeItem(cacheKey); // Данные уже неактуальны.
+            }
+        }
+        return null; // Данные устарели или отсутствуют
+    }
+
+    static setCache(url, data, expires_after_ms = DAY_MILLISECONDS) {
+        const cacheKey = this.getCacheKey(url);
+        const cacheData = {
+            data,
+            expires_at: Date.now() + expires_after_ms,
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+    }
+}
+
 
 function divide_authors_info(authors_raw_list) {
     function isNumeric(num) {
@@ -98,6 +135,25 @@ class ElibraryArticleMetadata {
         this._prnumber = prnumber || '';
     }
 
+    /** method
+    */
+    get_bibtex_entry() {
+        const metadata = this;
+        let bibtexEntry;
+
+        if (metadata._type.includes('конференци')) {
+            bibtexEntry = BibTexConferenceEntry.from_elibrary(metadata).get();
+        } else if (metadata._type.includes('журнал')) {
+            bibtexEntry = BibTexArticleEntry.from_elibrary(metadata).get();
+        } else if (metadata._type.includes('свидетельство о государственной регистрации')) {
+            bibtexEntry = BibTexPatentProgramEntry.from_elibrary(metadata).get();
+        } else {
+            console.log('Kind of the publication cannot be recognized!!! —', metadata._type);
+            bibtexEntry = null;
+        }
+        return bibtexEntry;
+    }
+
     /**
     * @param[in|out] metadata object
     */
@@ -128,7 +184,7 @@ class ElibraryArticleMetadata {
     static recognize_biblio_metadata_table(table_element, metadata) {
         let value_tags = [...table_element.querySelectorAll('a, font')];
 
-        value_tags.map(n => [n.previousSibling?.data.trim(), n.innerText]).forEach(([kind, value]) => {
+        value_tags.map(n => [n.previousSibling?.data?.trim(), n.innerText]).forEach(([kind, value]) => {
             if (!kind) {
                 return;  // Skip inappropriate element.
             }
@@ -169,49 +225,55 @@ class ElibraryArticleMetadata {
     }
 
     static parse(document) {
-        let metadata = new ElibraryArticleMetadata();
+        try {
+            let metadata = new ElibraryArticleMetadata();
 
-        let tables = document.querySelectorAll('table');
-        let di = -2;
+            let tables = document.querySelectorAll('table');
+            let di = -2;
 
-        const urls_table = tables[di + 24];
-        ElibraryArticleMetadata.recognize_urls_table(urls_table, metadata);
+            const urls_table = tables[di + 24];
+            ElibraryArticleMetadata.recognize_urls_table(urls_table, metadata);
 
-        metadata._title = tables[di + 25].querySelector('.bigtext').innerText;
+            metadata._title = tables[di + 25].querySelector('.bigtext').innerText;
 
-        let authors_raw_list = [];
-        for (let author of tables[di + 26].querySelectorAll('font')) {
-            authors_raw_list.push(author.innerText);
-        }
-        [metadata._authors, metadata._affiliations] = divide_authors_info(authors_raw_list);
-
-        const bibl_meta_table = tables[di + 27];
-        ElibraryArticleMetadata.recognize_biblio_metadata_table(bibl_meta_table, metadata);
-
-        const journal_table = tables[di + 28];
-        const table_caption = journal_table.querySelector('td font').innerText;
-        if (table_caption.includes('ЖУРНАЛ') || table_caption.includes('ИСТОЧНИК')) {
-
-            metadata._journal = journal_table.querySelector('a').innerText;
-
-            let publisher = journal_table.querySelectorAll('tr')[1].querySelector('td font');
-            if (publisher && publisher.previousSibling.data.trim().includes('Издательство')) {
-                metadata._publisher = publisher.innerText;
+            let authors_raw_list = [];
+            for (let author of tables[di + 26].querySelectorAll('font')) {
+                authors_raw_list.push(author.innerText);
             }
+            [metadata._authors, metadata._affiliations] = divide_authors_info(authors_raw_list);
+
+            const bibl_meta_table = tables[di + 27];
+            ElibraryArticleMetadata.recognize_biblio_metadata_table(bibl_meta_table, metadata);
+
+            const journal_table = tables[di + 28];
+            const table_caption = journal_table.querySelector('td font').innerText;
+            if (table_caption.includes('ЖУРНАЛ') || table_caption.includes('ИСТОЧНИК')) {
+
+                metadata._journal = journal_table.querySelector('a').innerText;
+
+                let publisher = journal_table.querySelectorAll('tr')[1].querySelector('td font');
+                if (publisher && publisher.previousSibling.data.trim().includes('Издательство')) {
+                    metadata._publisher = publisher.innerText;
+                }
+            }
+
+            // let tbl = tables[di + 29];
+            // if (tbl.querySelectorAll('td')[0].innerText === 'АННОТАЦИЯ:') {
+            //     metadata._abstract = tbl.querySelectorAll('td')[2].innerText;
+            // }
+
+            // // try next one
+            // tbl = tables[di + 30];
+            // if (tbl.querySelectorAll('td')[0].innerText === 'АННОТАЦИЯ:') {
+            //     metadata._abstract = tbl.querySelectorAll('td')[2].innerText;
+            // }
+
+            return metadata;
+        } catch (e) {
+            console.log('Exception in ElibraryArticleMetadata.parse:');
+            console.error(e);
+            return null;
         }
-
-        // let tbl = tables[di + 29];
-        // if (tbl.querySelectorAll('td')[0].innerText === 'АННОТАЦИЯ:') {
-        //     metadata._abstract = tbl.querySelectorAll('td')[2].innerText;
-        // }
-
-        // // try next one
-        // tbl = tables[di + 30];
-        // if (tbl.querySelectorAll('td')[0].innerText === 'АННОТАЦИЯ:') {
-        //     metadata._abstract = tbl.querySelectorAll('td')[2].innerText;
-        // }
-
-        return metadata;
     }
 }
 
@@ -413,7 +475,7 @@ class BibTexPatentProgramEntry extends BibTexEntry {
     }
 }
 
-function insert_to_page(bibtex_str) {
+function insert_to_page(bibtex_str, many=false) {
     // Создаём контейнер для BibTeX и кнопки
     const container = document.createElement('div');
     container.style.margin = '20px 0';
@@ -423,7 +485,7 @@ function insert_to_page(bibtex_str) {
 
     // Добавляем заголовок
     const header = document.createElement('h4');
-    header.innerText = 'Bibtex для этой публикации:';
+    header.innerText = many ? 'Bibtex для этих публикаций:' : 'Bibtex для этой публикации:';
     header.style.marginTop = '0px';
     container.appendChild(header);
 
@@ -433,7 +495,18 @@ function insert_to_page(bibtex_str) {
     bibtexPre.style.fontSize = '11px';
     // bibtexPre.style.textIndent = '50px';
     bibtexPre.innerText = bibtex_str;
-    container.appendChild(bibtexPre);
+    if (!many) {
+        // Добавить без сворачивания.
+        container.appendChild(bibtexPre);
+    } else {
+        // Обернуть в спойлер.
+        const details = document.createElement('details');
+        const summary = document.createElement('summary')
+        summary.innerText = '[Спойлер]';
+        details.appendChild(summary);
+        details.appendChild(bibtexPre);
+        container.appendChild(details);
+    }
 
     // Добавляем кнопку "Скопировать"
     const copyButton = document.createElement('button');
@@ -461,9 +534,14 @@ function insert_to_page(bibtex_str) {
     container.appendChild(copyButton);
 
     // Вставляем контейнер на страницу
-    const tables = document.querySelectorAll('table');
-    tables[tables.length - 3/*3*/].insertAdjacentElement('afterend', container);
-
+    if (!many) {
+        // В конец страницы о публикации.
+        const tables = document.querySelectorAll('table');
+        tables[tables.length - 3/*3*/].insertAdjacentElement('afterend', container);
+    } else {
+        // В начало документа со списком публикаций.
+        document.body.insertAdjacentElement('afterbegin', container);
+    }
     // Добавляем обработчик горячей клавиши Ctrl + B
     document.addEventListener('keydown', (event) => {
         if (event.ctrlKey && event.code === 'KeyB') {
@@ -481,25 +559,91 @@ function insert_to_page(bibtex_str) {
 }
 
 
-(function() {
+function handlePublicationPage() {
     'use strict';
     try {
         const metadata = ElibraryArticleMetadata.parse(document);
-        let bibtexEntry;
-
-        if (metadata._type.includes('конференци')) {
-            bibtexEntry = BibTexConferenceEntry.from_elibrary(metadata).get();
-        } else if (metadata._type.includes('журнал')) {
-            bibtexEntry = BibTexArticleEntry.from_elibrary(metadata).get();
-        } else if (metadata._type.includes('свидетельство о государственной регистрации')) {
-            bibtexEntry = BibTexPatentProgramEntry.from_elibrary(metadata).get();
-        } else {
-            console.log('Kind of the publication is not recognized!!! —', metadata._type);
-            return;
-        }
+        let bibtexEntry = metadata.get_bibtex_entry();
 
         // Вставляем BibTeX на страницу с интерактивными элементами
         insert_to_page(bibtexEntry);
+    } catch (e) {
+        // alert("Скрипт [elibrary-RSCI-to-BibTex] из расширения Tampermonkey.\nВозникла ошибка при извлечении библиографической информации! \nПодробности см. в консоли разработчика (F12) ↓");
+        console.log('handlePublicationPage run into errors...');
+        console.error(e);
+    }
+}
+
+async function fetchPublicationBibtex(publicationId) {
+    const url = `https://elibrary.ru/item.asp?id=${publicationId}`;
+    const cachedBibtexEntry = CacheManager.getCache(url);
+    if (cachedBibtexEntry) {
+        console.log('Used cached data for publication:', publicationId);
+        return cachedBibtexEntry;
+    }
+
+    console.log('fetchPublicationBibtex for:', url);
+
+    const response = await fetch(url);
+    const text = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, 'text/html');
+
+    const metadata = ElibraryArticleMetadata.parse(doc);
+    let bibtexEntry = metadata.get_bibtex_entry();
+    CacheManager.setCache(url, bibtexEntry);
+
+    return bibtexEntry;
+}
+
+async function handleAuthorPage() {
+    const authorId = new URL(window.location.href).searchParams.get('authorid');
+    const publicationLinks = document.querySelectorAll('a[href*="item.asp?id="]');
+    const publicationIds = Array.from(publicationLinks).map(link => {
+        const url = new URL(link.href);
+        return url.searchParams.get('id');
+    });
+
+    const bibtexEntries = [];
+    for (const publicationId of publicationIds) {
+        try {
+            const bibtexEntry = await fetchPublicationBibtex(publicationId);
+            if (!bibtexEntry) {
+                console.warn(`No info for publication with ID=${publicationId}`);
+                continue;
+            }
+
+            bibtexEntries.push(`% Публикация ${bibtexEntries.length + 1}.\n${bibtexEntry}`);
+        } catch (e) {
+            console.log('While collecting publications, exception occured...');
+            console.error(e);
+        }
+    }
+
+    const combinedBibtex = bibtexEntries.join('\n\n');
+    insert_to_page(combinedBibtex, true);
+}
+
+(async function() {
+    'use strict';
+
+    // Проверяем тип страницы
+    const currentUrl = window.location.href;
+
+    try {
+        if (currentUrl.match(/https:\/\/elibrary\.ru\/item\.asp\?id=\d+/)) {
+            // Страница отдельной публикации
+            handlePublicationPage();
+        } else if (currentUrl.match(/https:\/\/elibrary\.ru\/author_items\.asp\?authorid=\d+/)) {
+            // Страница автора
+            await handleAuthorPage();
+        } else if (currentUrl.match(/https:\/\/elibrary\.ru\/author_items\.asp/)) {
+            // Страница результатов поиска
+            await handleAuthorPage();
+            // handleSearchResultsPage();
+        } else {
+            console.log('Тип страницы не поддерживается:', currentUrl);
+        }
     } catch (e) {
         alert("Скрипт [elibrary-RSCI-to-BibTex] из расширения Tampermonkey.\nВозникла ошибка при извлечении библиографической информации! \nПодробности см. в консоли разработчика (F12) ↓");
         console.error(e);
