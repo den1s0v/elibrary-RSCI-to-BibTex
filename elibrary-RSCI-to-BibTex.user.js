@@ -264,6 +264,8 @@ class ElibraryArticleMetadata {
 
         if (metadata._type.includes('конференци')) {
             bibtexEntry = BibTexConferenceEntry.from_elibrary(metadata).get();
+        } else if (metadata._type.includes('статья в сборнике статей')) {
+            bibtexEntry = BibTexCollectionEntry.from_elibrary(metadata).get();
         } else if (metadata._type.includes('журнал')) {
             bibtexEntry = BibTexArticleEntry.from_elibrary(metadata).get();
         } else if (metadata._type.includes('свидетельство о государственной регистрации')) {
@@ -526,6 +528,26 @@ class BibTexConferenceEntry extends BibTexEntry {
                     // this.get_field('volume'),
                     // this.get_field('number'),
                 ]);
+    }
+}
+
+class BibTexCollectionEntry extends BibTexConferenceEntry {
+    static from_elibrary(elibrary_article) {
+        return new BibTexCollectionEntry(
+            elibrary_article._authors,
+            elibrary_article._title,
+            elibrary_article._journal, // Используем journal как booktitle для конференций
+            elibrary_article._year,
+            elibrary_article._pages,
+            elibrary_article._url,
+            elibrary_article._doi,
+            elibrary_article._language,
+            elibrary_article._publisher,
+        );
+    }
+
+    get_entry_type() {
+        return 'incollection';
     }
 }
 
