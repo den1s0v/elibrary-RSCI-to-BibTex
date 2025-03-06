@@ -637,7 +637,7 @@ function insert_to_page(bibtex_str, many=false) {
     bibtexPre.style.whiteSpace = 'pre-wrap';
     bibtexPre.style.fontSize = '11px';
     // bibtexPre.style.textIndent = '50px';
-    bibtexPre.innerText = bibtex_str;
+    bibtexPre.innerText = bibtex_str || 'Не удалось получить.';
     if (!many) {
         // Добавить без сворачивания.
         container.appendChild(bibtexPre);
@@ -651,30 +651,49 @@ function insert_to_page(bibtex_str, many=false) {
         container.appendChild(details);
     }
 
-    // Добавляем кнопку "Скопировать"
-    const copyButton = document.createElement('button');
-    copyButton.innerText = 'Скопировать (Ctrl+B)';
-    copyButton.style.marginTop = '10px';
-    copyButton.style.padding = '5px 10px';
-    copyButton.style.backgroundColor = '#007bff';
-    copyButton.style.color = '#fff';
-    copyButton.style.border = 'none';
-    copyButton.style.borderRadius = '5px';
-    copyButton.style.cursor = 'pointer';
+    if (bibtex_str)
+    {
+        // Текст не пустой.
+        // Добавляем кнопку "Скопировать"
+        const copyButton = document.createElement('button');
+        copyButton.innerText = 'Скопировать (Ctrl+B)';
+        copyButton.style.marginTop = '10px';
+        copyButton.style.padding = '5px 10px';
+        copyButton.style.backgroundColor = '#007bff';
+        copyButton.style.color = '#fff';
+        copyButton.style.border = 'none';
+        copyButton.style.borderRadius = '5px';
+        copyButton.style.cursor = 'pointer';
 
-    copyButton.addEventListener('click', () => {
-        navigator.clipboard.writeText(bibtex_str).then(() => {
-            copyButton.innerText = 'Скопировано!';
-            setTimeout(() => {
-                copyButton.innerText = 'Скопировать';
-            }, 2000);
-        }).catch(err => {
-            console.error('Ошибка при копировании: ', err);
-            copyButton.innerText = 'Ошибка!';
+        copyButton.addEventListener('click', () => {
+            navigator.clipboard.writeText(bibtex_str).then(() => {
+                copyButton.innerText = 'Скопировано!';
+                setTimeout(() => {
+                    copyButton.innerText = 'Скопировать';
+                }, 2000);
+            }).catch(err => {
+                console.error('Ошибка при копировании: ', err);
+                copyButton.innerText = 'Ошибка!';
+            });
         });
-    });
 
-    container.appendChild(copyButton);
+        container.appendChild(copyButton);
+
+        // Добавляем обработчик горячей клавиши Ctrl + B
+        document.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.code === 'KeyB') {
+                navigator.clipboard.writeText(bibtex_str).then(() => {
+                    copyButton.innerText = 'Скопировано (Ctrl+B)!';
+                    setTimeout(() => {
+                        copyButton.innerText = 'Скопировать';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Ошибка при копировании: ', err);
+                    copyButton.innerText = 'Ошибка!';
+                });
+            }
+        });
+    }
 
     // Вставляем контейнер на страницу
     if (!many) {
@@ -685,20 +704,6 @@ function insert_to_page(bibtex_str, many=false) {
         // В начало документа со списком публикаций.
         document.body.insertAdjacentElement('afterbegin', container);
     }
-    // Добавляем обработчик горячей клавиши Ctrl + B
-    document.addEventListener('keydown', (event) => {
-        if (event.ctrlKey && event.code === 'KeyB') {
-            navigator.clipboard.writeText(bibtex_str).then(() => {
-                copyButton.innerText = 'Скопировано (Ctrl+B)!';
-                setTimeout(() => {
-                    copyButton.innerText = 'Скопировать';
-                }, 2000);
-            }).catch(err => {
-                console.error('Ошибка при копировании: ', err);
-                copyButton.innerText = 'Ошибка!';
-            });
-        }
-    });
 }
 
 
