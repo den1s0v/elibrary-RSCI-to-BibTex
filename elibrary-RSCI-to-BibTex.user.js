@@ -697,7 +697,8 @@ function handlePublicationPage() {
 
 async function fetchPublicationBibtex(publicationId) {
     const url = `${ELIBRARY_DOMAIN}/item.asp?id=${publicationId}`;
-    const cachedBibtexEntry = CacheManager.getCache(url);
+    const cacheKey = `pub-${publicationId}`;
+    const cachedBibtexEntry = CacheManager.getCache(cacheKey);
     if (cachedBibtexEntry) {
         console.log('Used cached data for publication:', publicationId);
         return cachedBibtexEntry;
@@ -712,7 +713,7 @@ async function fetchPublicationBibtex(publicationId) {
 
     const metadata = ElibraryArticleMetadata.parse(doc);
     let bibtexEntry = metadata.get_bibtex_entry();
-    CacheManager.setCache(url, bibtexEntry);
+    CacheManager.setCache(cacheKey, bibtexEntry);
 
     return bibtexEntry;
 }
