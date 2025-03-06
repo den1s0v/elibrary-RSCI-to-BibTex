@@ -14,6 +14,14 @@
 // const ENTRY_ID_PREFIX = '';
 const ENTRY_ID_PREFIX = 'own_';
 
+
+
+
+// ↓ Внутренние определения ↓
+
+// Может быть переопределён как 'https://www.elibrary.ru'
+let ELIBRARY_DOMAIN = 'https://elibrary.ru';
+
 const translit_data = {
     "А":"A", "а":"a", "Б":"B", "б":"b", "В":"V", "в":"v", "Г":"G", "г":"g", "Д":"D", "д":"d",
     "Е":"E", "е":"e", "Ж":"ZH", "ж":"zh", "З":"Z", "з":"z", "И":"I", "и":"i", "Й":"I", "й":"i",
@@ -575,7 +583,7 @@ function handlePublicationPage() {
 }
 
 async function fetchPublicationBibtex(publicationId) {
-    const url = `https://elibrary.ru/item.asp?id=${publicationId}`;
+    const url = `${ELIBRARY_DOMAIN}/item.asp?id=${publicationId}`;
     const cachedBibtexEntry = CacheManager.getCache(url);
     if (cachedBibtexEntry) {
         console.log('Used cached data for publication:', publicationId);
@@ -627,17 +635,29 @@ async function handleAuthorPage() {
 (async function() {
     'use strict';
 
+    // Проверяем сайт
+    const currentHost = window.location.host;
+    if (!currentHost.includes('elibrary.ru')) {
+        console.log('The website is not elibrary.ru, exiting.');
+        return;
+    }
+
+    // Set website root (host, domain).
+    // 'https://elibrary.ru' or 'https://www.elibrary.ru'
+    ELIBRARY_DOMAIN = window.location.origin;
+
     // Проверяем тип страницы
     const currentUrl = window.location.href;
+    const currentPath = window.location.pathname + window.location.search;
 
     try {
-        if (currentUrl.match(/https:\/\/elibrary\.ru\/item\.asp\?id=\d+/)) {
+        if (currentPath.match(/\/item\.asp\?id=\d+/)) {
             // Страница отдельной публикации
             handlePublicationPage();
-        } else if (currentUrl.match(/https:\/\/elibrary\.ru\/author_items\.asp\?authorid=\d+/)) {
+        } else if (currentPath.match(/\/author_items\.asp\?authorid=\d+/)) {
             // Страница автора
             await handleAuthorPage();
-        } else if (currentUrl.match(/https:\/\/elibrary\.ru\/author_items\.asp/)) {
+        } else if (currentPath.match(/\/author_items\.asp/)) {
             // Страница результатов поиска
             await handleAuthorPage();
             // handleSearchResultsPage();
