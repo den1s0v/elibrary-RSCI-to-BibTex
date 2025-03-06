@@ -156,6 +156,7 @@ class ProgressIndicator {
         this.show('bar');
         const percent = (current / max) * 100;
         this.progressBar.style.width = `${percent}%`;
+        this.progressBar.style.animation = 'none';
     }
 
     // Установить прогресс (без известного максимума)
@@ -731,17 +732,19 @@ async function handleAuthorPage() {
     });
 
     const bibtexEntries = [];
+    let failed = 0;
     for (const publicationId of publicationIds) {
         try {
             const bibtexEntry = await fetchPublicationBibtex(publicationId);
             if (!bibtexEntry) {
                 console.warn(`No info for publication with ID=${publicationId}`);
+                failed += 1;
                 continue;
             }
 
             bibtexEntries.push(`% Публикация ${bibtexEntries.length + 1}.\n${bibtexEntry}`);
 
-            // progress.setProgress(bibtexEntries.length, publicationIds.length);
+            progress.setProgress(bibtexEntries.length, publicationIds.length);
         } catch (e) {
             console.log('While collecting publications, exception occured...');
             console.error(e);
@@ -750,7 +753,7 @@ async function handleAuthorPage() {
 
     const result_count = bibtexEntries.length;
     progress.clearProgress();
-    progress.showNotification(`Получено записей bibtex: ${result_count}`, 10, true);
+    progress.showNotification(`Получено записей bibtex: ${result_count}, c ошибками: ${failed}, всего ссылкок: ${publicationIds.length}`, 20, true);
 
     if (result_count > 0) {
         const combinedBibtex = bibtexEntries.join('\n\n');
