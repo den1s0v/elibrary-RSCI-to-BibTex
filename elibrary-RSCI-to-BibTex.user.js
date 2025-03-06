@@ -11,6 +11,10 @@
 // @grant        none
 // ==/UserScript==
 
+
+// Конфигурация пользователем //
+
+// Добавить общий префикс к идентификатору всех публикаций
 // const ENTRY_ID_PREFIX = '';
 const ENTRY_ID_PREFIX = 'own_';
 
@@ -75,6 +79,114 @@ class CacheManager {
         localStorage.setItem(cacheKey, JSON.stringify(cacheData));
     }
 }
+
+
+class ProgressIndicator {
+    constructor() {
+        // Создаём контейнер для индикатора
+        this.container = document.createElement('div');
+        this.container.style.position = 'fixed';
+        this.container.style.top = '0';
+        this.container.style.left = '0';
+        this.container.style.width = '100%';
+        this.container.style.backgroundColor = '#f0f0f0';
+        this.container.style.padding = '4px';
+        this.container.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.2)';
+        this.container.style.zIndex = '1000';
+        this.container.style.display = 'none'; // По умолчанию скрыт
+
+        // Элемент для текста
+        this.textElement = document.createElement('span');
+        this.textElement.style.marginRight = '10px';
+
+        // Элемент для прогресс-бара
+        this.progressBar = document.createElement('div');
+        this.progressBar.style.height = '5px';
+        this.progressBar.style.backgroundColor = '#007bff';
+        this.progressBar.style.width = '0%';
+        this.progressBar.style.transition = 'width 0.3s ease';
+
+        // Добавляем элементы в контейнер
+        this.container.appendChild(this.progressBar);
+        this.container.appendChild(this.textElement);
+
+        // Вставляем контейнер в тело документа
+        document.body.appendChild(this.container);
+    }
+
+    // Показать индикатор
+    show(what=null) {
+        this.container.style.display = 'block';
+        if (what === 'text')
+            this.textElement.style.display = 'block';
+        if (what === 'bar')
+            this.progressBar.style.display = 'block';
+    }
+
+    // Скрыть индикатор
+    hide(what=null) {
+        if (what === null)
+            // Hide completely
+            this.container.style.display = 'none';
+
+        if (what === 'text')
+            this.textElement.style.display = 'none';
+        if (what === 'bar')
+            this.progressBar.style.display = 'none';
+    }
+
+    // Установить текст
+    setText(text) {
+        this.show('text');
+        this.textElement.innerText = text;
+    }
+
+    // Показать уведомление с автоматическим скрытием
+    showNotification(message, duration = 3, full_hide_on_done=false) {
+        this.textElement.innerText = message;
+        this.show('text');
+        setTimeout(() => {
+            this.textElement.innerText = '';
+            this.hide(full_hide_on_done ? null : 'text');
+        }, duration * 1000);
+    }
+
+    // Установить прогресс (с известным максимумом)
+    setProgress(current, max) {
+        this.show('bar');
+        const percent = (current / max) * 100;
+        this.progressBar.style.width = `${percent}%`;
+    }
+
+    // Установить прогресс (без известного максимума)
+    setIndeterminateProgress() {
+        this.show('bar');
+        this.progressBar.style.width = '50%'; // Анимация для неизвестного прогресса
+        this.progressBar.style.backgroundColor = '#007bff';
+        this.progressBar.style.animation = 'progressIndeterminate 2s infinite';
+    }
+
+    // Очистить прогресс
+    clearProgress() {
+        this.hide('bar');
+        this.progressBar.style.width = '0%';
+        this.progressBar.style.backgroundColor = '#007bff';
+        this.progressBar.style.animation = 'none';
+    }
+
+    static init_once() {
+        // Добавляем CSS для анимации прогресса (неопределённый прогресс)
+        const style = document.createElement('style');
+        style.innerHTML = `
+        @keyframes progressIndeterminate {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+        }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
 
 
 function divide_authors_info(authors_raw_list) {
@@ -605,6 +717,12 @@ async function fetchPublicationBibtex(publicationId) {
 }
 
 async function handleAuthorPage() {
+    ProgressIndicator.init_once();
+    const progress = new ProgressIndicator();
+    // progress.show();
+    progress.showNotification("Обработка списка...", 5);
+    progress.setIndeterminateProgress();
+
     const authorId = new URL(window.location.href).searchParams.get('authorid');
     const publicationLinks = document.querySelectorAll('a[href*="item.asp?id="]');
     const publicationIds = Array.from(publicationLinks).map(link => {
@@ -622,14 +740,22 @@ async function handleAuthorPage() {
             }
 
             bibtexEntries.push(`% Публикация ${bibtexEntries.length + 1}.\n${bibtexEntry}`);
+
+            // progress.setProgress(bibtexEntries.length, publicationIds.length);
         } catch (e) {
             console.log('While collecting publications, exception occured...');
             console.error(e);
         }
     }
 
-    const combinedBibtex = bibtexEntries.join('\n\n');
-    insert_to_page(combinedBibtex, true);
+    const result_count = bibtexEntries.length;
+    progress.clearProgress();
+    progress.showNotification(`Получено записей bibtex: ${result_count}`, 10, true);
+
+    if (result_count > 0) {
+        const combinedBibtex = bibtexEntries.join('\n\n');
+        insert_to_page(combinedBibtex, true);
+    }
 }
 
 (async function() {
