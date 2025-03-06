@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         elibrary-RSCI-to-BibTex
 // @namespace    http://tampermonkey.net/
-// @version      0.3
+// @version      0.4
 // @description  Elibrary (Russian Science Citation Index) to BibTex article citation
 // @author       You
 // @match        https://*elibrary.ru/item.asp?id=*
