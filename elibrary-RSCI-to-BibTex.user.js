@@ -285,8 +285,10 @@ class ElibraryArticleMetadata {
         let value_tags = table_element.querySelectorAll('font');
 
         value_tags.forEach((tag) => {
-            let kind = tag.previousSibling.data.trim();
-            let href = tag.children[0].href;
+            let kind = tag.previousSibling?.data?.trim();
+            let href = tag.children[0]?.href;
+            if (!kind || !href)
+                return;
             if (kind.includes('ID')) {
                 // Keep plain old URL is EDN is not provided
                 metadata._url = href;
