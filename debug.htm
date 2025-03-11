@@ -1,0 +1,37 @@
+<html>
+<head>
+<meta charset="UTF-8">
+
+<script src="elibrary-RSCI-to-BibTex.user.js" type="text/javascript" charset="utf-8" /></script>
+
+
+<script>
+
+console.debug('Hello!');
+console.debug(transliterate('Привет!'));
+
+
+(async function /*__main*/() {
+	console.debug('__main!');
+
+	// var url = 'debug/CompPrehension - Model-Based Intelligent Tutoring System on Comprehension Level.html';
+	var url = 'debug/article-page.min.html';
+
+    const response = await fetch(url);
+    const text = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, 'text/html');
+
+    const metadata = ElibraryArticleMetadata.parse(doc);
+	console.log(metadata);
+
+    let bibtexEntry = metadata.get_bibtex_entry();
+	console.log(bibtexEntry);
+
+	console.debug('END of __main.');
+})()
+
+
+</script>
+</head>
+</html>

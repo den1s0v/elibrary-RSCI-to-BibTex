@@ -1,0 +1,971 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="robots" content="noarchive, nofollow">
+
+<meta name="description" content='Sychev O., Anikin A., Penskoy N., Denisov M., Prokudin A.
+Lecture Notes in Computer Science, 2021'>
+<title>CompPrehension - Model-Based Intelligent Tutoring System on Comprehension Level</title>
+
+<meta property="og:image" content="https://elibrary.ru/images/orgs_access.png" />
+<meta property="og:title" content='CompPrehension - Model-Based Intelligent Tutoring System on Comprehension Level' />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://elibrary.ru/jrxmed" />
+<meta property="og:site_name" content="eLIBRARY.RU"/>
+<meta property="og:description" content='Sychev O., Anikin A., Penskoy N., Denisov M., Prokudin A.
+Lecture Notes in Computer Science, 2021' />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+
+
+<meta name="doi" content="10.1007/978-3-030-80421-3_6">
+
+
+<script type="text/javascript" src="/jquery.min.js"></script>
+<script type="text/javascript" src="/jquery.tools.min.js"></script>
+<script type="text/javascript" src="/fancybox/jquery.fancybox-1.3.4.pack.js"></script>
+<script type="text/javascript" src="/fancybox/jquery.easydrag.js"></script>
+<script type="text/javascript" src="/elibrary.js"></script>
+<script type="text/javascript" src="/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<link rel="stylesheet" href="/fancybox/jquery.fancybox-1.3.4.css" type="text/css" media="screen">
+<link rel="stylesheet" href="/style_sm.css" type="text/css" media="screen">
+
+</head>
+
+<body> 
+<table width=100% cellpadding=0 cellspacing=0 border=0>
+<tr><td width=100% align=center valign=top>
+
+<table  cellpadding=0 cellspacing=0 border=0>
+<tr><td width=170 align=left valign=top id="leftcol">
+
+<table border=0 cellspacing=0 cellpadding=0 width=150>
+
+<tr><td><a href="/defaultx.asp"><img src="/images/welcome1.jpg" width=150 title="НАУЧНАЯ ЭЛЕКТРОННАЯ БИБЛИОТЕКА eLIBRARY.RU" border=0 vspace=15></a></td></tr>
+
+<tr><td><a href="/defaultx.asp"><img id="elibrary_logo" src="/images/elibrary_logo2.svg" width=150 height=39 border=0 vspace=10 title="eLIBRARY.RU - НАУЧНАЯ ЭЛЕКТРОННАЯ БИБЛИОТЕКА"></a></td></tr>
+
+<tr><td><div style="height:10px;"></div></td></tr>
+<tr><td width=150 align=center valign=top>
+
+<a href="title_about_new.asp?id=2347"><img src="/titles/2347/обложка.PNG" border=0 width=120 title='О журнале "Lecture Notes in Computer Science"' style="behavior: url(/pie/PIE.htc); box-shadow: 1px 2px 3px #888;" hspace=0></a>
+
+</td></tr>
+
+
+<tr><td><div style="height:20px;"></div></td></tr>
+<script language="JavaScript">
+if (supportsSVG) {
+  document.getElementById("elibrary_logo").src="/images/elibrary_logo2.svg";}
+else {
+  document.getElementById("elibrary_logo").src="/images/elibrary_logo.gif";}
+</script>
+
+<tr><td width=100% align=center valign=top>
+
+<div class="left-panel">
+
+<table border=0 cellspacing=0 cellpadding=0 width=140>
+<tr><td width=100% align=center valign=top><font color=#F26C4F><b><span class="expandable" onClick="$('#win_basket').slideToggle(500, function(){didScroll = true;})" title="Состояние корзины в электронном магазине eLIBRARY.ru">КОРЗИНА</span></b></font>
+</td></tr>
+</table>
+
+<div ID="win_basket" class="collapsed">
+<div style="height: 10px;"></div>
+
+<table border=0 cellspacing=0 cellpadding=2 width=140>
+
+<tr><td width=100% align=center valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Всего в корзине:&nbsp;</font><font color=#00008f><b><span id="basket_num">0</span></b>&nbsp;публ.</font></td></tr>
+<tr><td width=100% align=center valign=top>
+&nbsp;<font color=#000000>на сумму:&nbsp;</font><font color=#00008f><b><span id="basket_sum">0</span></b>&nbsp;руб.</font></td></tr>
+</td></tr>
+
+</table>
+
+<div style="height: 10px;"></div>
+
+<table border=0 cellspacing=0 cellpadding=0 width=140>
+<tr class="menub"><td align=center width=30 valign=bottom><a href="/basket.asp"><img src="images/basket.png" width=15 height=15 border=0></a></td><td align=left width=110 valign=top><a href="/basket.asp">Содержание корзины</a></td></tr>
+</table>
+
+</div>
+</div>
+</td></tr>
+
+<tr><td><img src="/pic/1pix.gif" vspace=9></td></tr>
+
+<FORM method=post name="search" onSubmit="return false">
+<input type="hidden" name="where_fulltext" value="on">
+<input type="hidden" name="where_name" value="on">
+<input type="hidden" name="where_abstract" value="on">
+<input type="hidden" name="where_keywords" value="on">
+<input type="hidden" name="where_affiliation" value="">
+<input type="hidden" name="where_references" value="">
+<input type="hidden" name="type_article" value="on">
+<input type="hidden" name="type_disser" value="on">
+<input type="hidden" name="type_book" value="on">
+<input type="hidden" name="type_report" value="on">
+<input type="hidden" name="type_conf" value="on">
+<input type="hidden" name="type_patent" value="on">
+<input type="hidden" name="type_preprint" value="on">
+<input type="hidden" name="type_grant" value="on">
+<input type="hidden" name="type_dataset" value="on">
+<input type="hidden" name="search_freetext" value="">
+<input type="hidden" name="search_morph" value="on">
+<input type="hidden" name="search_fulltext" value="">
+<input type="hidden" name="search_open" value="">
+<input type="hidden" name="search_results" value="">
+<input type="hidden" name="titles_all" value="">
+<input type="hidden" name="authors_all" value="">
+<input type="hidden" name="rubrics_all" value="">
+<input type="hidden" name="queryboxid" value="">
+<input type="hidden" name="itemboxid" value="">
+<input type="hidden" name="begin_year" value="">
+<input type="hidden" name="end_year" value="">
+<input type="hidden" name="issues" value="all">
+<input type="hidden" name="orderby" value="rank">
+<input type="hidden" name="order" value="rev">
+<input type="hidden" name="changed" value="1">
+
+<tr><td width=100% align=center valign=top>
+
+<div class="left-panel">
+
+<table border=0 cellspacing=0 cellpadding=0 width=140>
+<tr><td width=100% align=center valign=top><font color=#F26C4F><b><span class="expandable" onClick="$('#win_search').slideToggle(500, function(){didScroll = true;})" title="Поиск в Научной электронной библиотеке">ПОИСК</span></b></font>
+</td></tr>
+</table>
+<div ID="win_search" class="collapsed">
+
+<table border=0 cellspacing=0 cellpadding=0 width=140>
+<tr><td width=140 align=center valign=top>
+<div style="height: 10px;"></div>
+<div class="formfr" style="width:126px;"><input type=text id="ftext" name="ftext" value="" style="width:118px;" class="inputt" onKeyPress="search_enter(event);"></div>
+<div style="height: 11px;"></div>
+
+<div class="butblue" style="width: 52px;" onClick="check_search()">Найти</div>
+
+</td></tr>
+<tr><td><img src="/pic/1pix.gif"></td></tr>
+</table>
+
+<table border=0 cellspacing=0 cellpadding=0 width=140>
+<tr class="menub"><td align=center width=20 valign=bottom><img src="/images/or_kv.gif" width=7 height=7 vspace=1 class="shadow"></td><td align=left width=120 valign=top><a href="/querybox.asp?scope=newquery">Расширенный поиск</a></td></tr>
+
+
+<tr><td colspan=2><div style="height:3px;"></div></td></tr>
+<tr class="menub"><td align=center width=20 valign=bottom><img src="/images/or_kv.gif" width=7 height=7 vspace=1 class="shadow"></td><td align=left width=120 valign=top><a href="/neural_search.asp">Нейропоиск</a></td></tr>
+</table>
+<div style="height: 4px;"></div>
+</div>
+</div>
+
+</FORM>
+
+</td></tr>
+
+<tr><td><img src="/pic/1pix.gif" vspace=9></td></tr>
+<tr><td width=100% align=center valign=top>
+
+<div class="left-panel">
+
+<table border=0 cellspacing=0 cellpadding=0 width=140>
+<tr><td width=100% align=center valign=top><font color=#F26C4F><b><span class="expandable" onClick="$('#win_goto').slideToggle(500, function(){didScroll = true;})" title="Быстрый переход на популярные страницы сайта">НАВИГАТОР</span></b></font>
+</td></tr>
+</table>
+
+<div ID="win_goto" class="collapsed">
+<div style="height: 10px;"></div>
+
+<table border=0 cellspacing=4 cellpadding=0 width=140>
+
+<tr valign=top><td width=25 align=center><img src="/images/bl_kv.gif" border=0 width=7 height=7 hspace=3 class="shadow"></td><td align=left width=115><a href="/titles.asp">ЖУРНАЛЫ</a></td></tr>
+<tr valign=top><td align=center><img src="/images/bl_kv.gif" border=0 width=7 height=7 hspace=3 class="shadow"></td><td align=left><a href="/books.asp">КНИГИ</a></td></tr>
+<tr valign=top><td align=center><img src="/images/bl_kv.gif" border=0 width=7 height=7 hspace=3 class="shadow"></td><td align=left><a href="/patents.asp">ПАТЕНТЫ</a></td></tr>
+<tr valign=top><td align=center><img src="/images/bl_kv.gif" border=0 width=7 height=7 hspace=3 class="shadow"></td><td align=left><a href="/querybox.asp">ПОИСК</a></td></tr>
+<tr valign=top><td align=center><img src="/images/bl_kv.gif" border=0 width=7 height=7 hspace=3 class="shadow"></td><td align=left><a href="/authors.asp">АВТОРЫ</a></td></tr>
+<tr valign=top><td align=center><img src="/images/bl_kv.gif" border=0 width=7 height=7 hspace=3 class="shadow"></td><td align=left><a href="/orgs.asp">ОРГАНИЗАЦИИ</a></td></tr>
+<tr valign=top><td align=center><img src="/images/bl_kv.gif" border=0 width=7 height=7 hspace=3 class="shadow"></td><td align=left><a href="/keywords.asp">КЛЮЧЕВЫЕ СЛОВА</a></td></tr>
+<tr valign=top><td align=center><img src="/images/bl_kv.gif" border=0 width=7 height=7 hspace=3 class="shadow"></td><td align=left><a href="/rubrics.asp">РУБРИКАТОР</a></td></tr>
+
+<tr valign=top><td align=center><img src="/images/bl_kv.gif" border=0 width=7 height=7 hspace=3 class="shadow"></td><td align=left><a href="/refs.asp">ССЫЛКИ</a></td></tr>
+
+<tr valign=top><td align=center><img src="/images/bl_kv.gif" border=0 width=7 height=7 hspace=3 class="shadow"></td><td align=left><a href="/itembox.asp">ПОДБОРКИ</a></td></tr>
+
+
+</table>
+
+<div style="height: 10px;"></div>
+
+<table border=0 cellspacing=0 cellpadding=0 width=140>
+<tr class="menub"><td align=right width=25 valign=bottom><img src="/images/or_kv.gif" width=7 height=7 border=0 hspace=6 vspace=1 class="shadow"></td><td align=left width=115 valign=top><a href="/defaultx.asp">Начальная страница</a></td></tr></table>
+<div style="height: 4px;"></div>
+
+</div>
+</div>
+</td></tr>
+
+<tr><td><img src="/pic/1pix.gif" vspace=9></td></tr>
+<SCRIPT LANGUAGE="JavaScript">
+function end_session(){
+
+  if (confirm("Сохранить Ваши данные на этом компьютере?")){
+    document.forms["session"].saveuser.value="1";}
+  else{
+    document.forms["session"].saveuser.value="0";}
+
+  document.forms["session"].action="/end_session.asp";
+  document.forms["session"].target="";
+  document.forms["session"].submit()
+}
+</SCRIPT>
+<FORM action="/end_session.asp" method=POST name="session">
+<input type="hidden" name="saveuser" value="1">
+
+<tr><td width=100% align=center valign=top>
+
+<div class="left-panel">
+
+<table border=0 cellspacing=0 cellpadding=0 width=140>
+<tr><td width=100% align=center valign=top><font color=#F26C4F><b><span class="expandable" onClick="$('#win_session').slideToggle(500, function(){didScroll = true;})" title="Информация о текущей сессии пользователя">СЕССИЯ</span></b></font>
+</td></tr>
+</table>
+
+
+<div ID="win_session" class="collapsed">
+<div style="height: 10px;"></div>
+
+<table border=0 cellspacing=0 cellpadding=2 width=140>
+<tr><td width=100% align=left valign=top>
+&nbsp;<font color=#000000>Имя пользователя:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f><a href="author_info.asp?isold=1" title="Персональная карточка пользователя">ded-moroz&nbsp;</a></font></td></tr>
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>SPIN-код автора:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f><a href="author_info.asp?isold=1" title="Персональная карточка автора">4612-1744</a></font></td></tr>
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>IP-адрес компьютера:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f>5.142.47.44</font></td></tr>
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Название организации:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+
+<font color=#00008f><a href="/org_about.asp?orgsid=1000">Волгоградский государственный технический университет</a></font></td></tr>
+
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Начало работы:</font></td></tr>
+
+<tr><td width=100% align=center valign=top>
+<font color=#00008f>06.03.2025 19:29</font></td></tr>
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Время работы:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f>03:36</font></td></tr>
+</table>
+
+<div style="height: 10px;"></div>
+
+<table border=0 cellspacing=3 cellpadding=0 width=140>
+<tr class="menub"><td align=right width=30 valign=top><img src="/images/or_kv.gif" width=7 height=7 border=0 hspace=9 vspace=1 class="shadow"></td><td align=left width=101 valign=top><a href="/project_user_office.asp">Личный кабинет</a></td></tr>
+<tr class="menub"><td align=right width=30 valign=top><img src="/images/or_kv.gif" width=7 height=7 border=0 hspace=9 vspace=1 class="shadow"></td><td align=left width=101 valign=top><a href="javascript:end_session()">Закрыть сессию</a></td></tr>
+
+
+</table>
+<div style="height: 4px;"></div>
+
+</div>
+</div>
+</td></tr>
+
+<tr><td><img src="/pic/1pix.gif" vspace=9></td></tr>
+</FORM>
+
+<tr><td width=100% align=center valign=top>
+
+<div class="left-panel">
+
+<table border=0 cellspacing=0 cellpadding=0 width=140>
+<tr><td width=100% align=center valign=top><font color=#F26C4F><b><span class="expandable" onClick="$('#win_contact').slideToggle(500, function(){didScroll = true;})" title="Контактная информация Научной электронной библиотеки">КОНТАКТЫ</span></b></font>
+</td></tr>
+</table>
+
+<div ID="win_contact" class="collapsed">
+<div style="height: 10px;"></div>
+
+<table border=0 cellspacing=0 cellpadding=2 width=140>
+
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Служба поддержки:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f>+7 (495) 544-2494 доб. 1<br></font>
+<font color=#00008f><a href="mailto:support@elibrary.ru">support@elibrary.ru</a></font></td></tr>
+</td></tr>
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Издателям журналов:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f>+7 (495) 544-2494 доб. 2<br></font>
+<font color=#00008f><a href="mailto:publish@elibrary.ru">publish@elibrary.ru</a></font></td></tr>
+
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Издателям книг:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f>+7 (495) 544-2494 доб. 3<br></font>
+<font color=#00008f><a href="mailto:book@elibrary.ru">book@elibrary.ru</a></font></td></tr>
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Science Space для издательств:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f>+7 (495) 544-2494 доб. 4<br></font>
+<font color=#00008f><a href="mailto:info@sciencespace.ru">info@sciencespace.ru</a></font></td></tr>
+
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Science Index для организаций:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f>+7 (495) 544-2494 доб. 4<br></font>
+<font color=#00008f><a href="mailto:org@scienceindex.ru">org@scienceindex.ru</a></font></td></tr>
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Доступ к API:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f>+7 (495) 544-2494 доб. 4<br></font>
+<font color=#00008f><a href="mailto:api@elibrary.ru">api@elibrary.ru</a></font></td></tr>
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Подписчикам:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f>+7 (495) 544-2494 доб. 6<br></font>
+<font color=#00008f><a href="mailto:sales.team@elibrary.ru">sales.team@elibrary.ru</a></font></td></tr>
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Конференции, семинары:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f>+7 (495) 544-2494 доб. 7<br></font>
+<font color=#00008f><a href="mailto:conf@elibrary.ru">conf@elibrary.ru</a></font></td></tr>
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Почтовый адрес:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f><a href="/contact_new.asp">117246, г. Москва,
+Научный проезд, д. 14А, стр. 3, таунхаус 1</a></font></td></tr>
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Веб-сайт:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f><a href="https://elibrary.ru">https://elibrary.ru</a></font></td></tr>
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Telegram-канал:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f><a href="https://t.me/elibrary_ru_official" target=_blank>t.me/elibrary_ru_official</a></font></td></tr>
+
+<tr><td width=100% align=left valign=top>
+<div style="height: 2px;"></div>
+&nbsp;<font color=#000000>Размещение рекламы:</font></td></tr>
+<tr><td width=100% align=center valign=top>
+<font color=#00008f><a href="mailto:reklama@elibrary.ru">reklama@elibrary.ru</a></font></td></tr>
+
+</table>
+
+<div style="height: 10px;"></div>
+
+<table border=0 cellspacing=0 cellpadding=0 width=140>
+<tr class="menub"><td align=right width=30 valign=bottom><img src="/images/or_kv.gif" width=7 height=7 border=0 hspace=6 vspace=1 class="shadow"></td><td align=left width=110 valign=top><a href="/contact_new.asp">Схема проезда</a></td></tr>
+
+<tr class="menub"><td align=right width=30 valign=bottom><img src="/images/or_kv.gif" width=7 height=7 border=0 hspace=6 vspace=1 class="shadow"></td><td align=left width=110 valign=top><a href="https://support.elibrary.ru">Задать вопрос</a></td></tr>
+
+<tr class="menub"><td align=right width=30 valign=bottom><img src="/images/or_kv.gif" width=7 height=7 border=0 hspace=6 vspace=1 class="shadow"></td><td align=left width=110 valign=top><a href="/vacancy.asp">Вакансии</a></td></tr>
+
+</table>
+<div style="height: 4px;"></div>
+
+</div>
+</div>
+</td></tr>
+
+<tr><td><img src="/pic/1pix.gif" vspace=9></td></tr>
+<tr><td width=100% align=center valign=top>
+<div style="width: 140px;" class="help-panel">
+<table width=140 cellspacing=0 cellpadding=3 border=0>
+<tr><td width=15% align=right valign=top>
+<img src="/images/but_orange_i.gif" width=15 height=15 hspace=0 border=0></td>
+<td width=85% align=left valign=middle><font color=#00008f>По всем вопросам, связанным с работой в системе Science Index, обращайтесь, пожалуйста, в службу поддержки:<br><br>
++7 (495) 544-2494<br><a href="mailto:support@elibrary.ru">support@elibrary.ru</a></font>
+</td></tr>
+</table>
+</div>
+</td></tr>
+
+<tr><td><img src="/pic/1pix.gif" vspace=9></td></tr>
+
+
+</table>
+
+</td><td align=left valign=top>
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr><td width=600 align=left valign=top>
+
+<table width=580 border=0 cellspacing=0 cellpadding=0>
+<tr><td width=100% align=left valign=top>
+
+
+
+<div class="header-panel">
+<div style="margin: 0; border: 0; padding: 0 0 5px 0; text-align: center; font-size: 9pt;"><font color=#5674b9><b>ИНФОРМАЦИЯ О ПУБЛИКАЦИИ</b></font></div>
+</div>
+
+</td></tr></table>
+
+</td><td width=200 align=right valign=middle id="rightcol">
+
+
+<table width=200 cellspacing=0 cellpadding=3 border=0>
+<tr><td width=12% align=right valign=top>
+<a href="https://t.me/elibrary_ru_official/40" target=_blank><img src="/images/telegram.svg" width=24 height=24 border=0></a></td>
+<td width=88% align=left valign=middle><font color=#00008f><a href="https://t.me/elibrary_ru_official/40" target=_blank>Из РИНЦ исключены более 200 сборников статей</a></font>
+</td></tr>
+</table>
+</td></tr>
+
+
+
+<FORM method=post name="results" action="">
+
+<tr><td align=left valign=top>
+
+<table width=550 cellspacing=0 cellpadding=3 border=0>
+<tr valign=middle>
+<td width=2%></td>
+<td width=25% align=left>eLIBRARY ID:&nbsp;<font color=#00008f><a href="item.asp?id=46994849" rel="nofollow">46994849</a></font></td>
+<td width=15% align=center>EDN:&nbsp;<font color=#00008f><a href="/jrxmed" rel="nofollow">JRXMED</a></font></td>
+
+<td align=left width=5%><a href='javascript:qr_code("jrxmed")' rel="nofollow"><img src="/images/qr_code2.png" width=16 height=16 class='help' title="Сгенерировать QR код для ссылки на этот документ"></a></td>
+
+<td width=53% align=right>DOI:&nbsp;<font color=#00008f><a href=https://doi.org/10.1007/978-3-030-80421-3_6 target=_blank rel=nofollow>10.1007/978-3-030-80421-3_6</a></font></td>
+</tr>
+
+</table>
+<div style="height:5px;"></div>
+
+<table width=550 cellspacing=0 cellpadding=3 border=0 style="table-layout: fixed;">
+<tr align=center valign=middle>
+<td width=4></td>
+<td width=534><span style="font-size: 9pt; color: #000000; overflow-wrap: break-word;"><b><p class='bigtext' style='color: #F26C4F;'>COMPPREHENSION - MODEL-BASED INTELLIGENT TUTORING SYSTEM ON COMPREHENSION LEVEL</p></b></span></td></tr>
+</table>
+
+<div style="width:580px; margin:0; border:0; padding:0; ">
+
+
+<div style="height:10px;"></div>
+<table width=550 border=0 cellspacing=0 cellpadding=3>
+<tr>
+<td width=24></td>
+<td width=514 valign=middle align=center>
+<div style='display: inline-block; white-space: nowrap'><span class='help pointer' title='<b><font color=#F26C4F>Сычев Олег Александрович</font></b><br>Волгоградский государственный технический университет<br><a href="author_profile.asp?authorid=447111" target=_blank>Профиль автора в SCIENCE INDEX</a><br><a href="author_items.asp?authorid=447111" target=_blank>Список публикаций в РИНЦ</a>'><b><font color=#00008f>SYCHEV&nbsp;O.</font></b></span><span class='astmd help' title='Автор, отвечающий за переписку'>*</span><a href='mailto:o_sychev@vstu.ru'><img src='/images/mail1.gif' border=0 hspace=2 height=8 width=10 class='help pointer' title='Написать письмо автору'></a><img src='/images/about_author.gif' border=0 hspace=2 height=10 width=9 class='help pointer' title='ORCID:&nbsp;<a href="https://orcid.org/0000-0002-7296-2538" target=_blank>0000-0002-7296-2538</a>&nbsp;&nbsp; '><font color=#000000><sup>1</sup></font>,</div> <div style='display: inline-block; white-space: nowrap'><span class='help pointer' title='<b><font color=#F26C4F>Аникин Антон Викторович</font></b><br>Волгоградский государственный технический университет<br><a href="author_profile.asp?authorid=618430" target=_blank>Профиль автора в SCIENCE INDEX</a><br><a href="author_items.asp?authorid=618430" target=_blank>Список публикаций в РИНЦ</a>'><b><font color=#00008f>ANIKIN&nbsp;A.</font></b></span><img src='/images/about_author.gif' border=0 hspace=2 height=10 width=9 class='help pointer' title='ORCID:&nbsp;<a href="https://orcid.org/0000-0003-0661-4284" target=_blank>0000-0003-0661-4284</a>&nbsp;&nbsp; '><font color=#000000><sup>1</sup></font>,</div> <div style='display: inline-block; white-space: nowrap'><b><font color=#00008f>PENSKOY&nbsp;N.</font></b><img src='/images/about_author.gif' border=0 hspace=2 height=10 width=9 class='help pointer' title='ORCID:&nbsp;<a href="https://orcid.org/0000-0002-4443-3399" target=_blank>0000-0002-4443-3399</a>&nbsp;&nbsp; '><font color=#000000><sup>1</sup></font>,</div> <div style='display: inline-block; white-space: nowrap'><span class='help pointer' title='<b><font color=#F26C4F>Денисов Михаил Евгеньевич</font></b><br>Волгоградский государственный технический университет<br><a href="author_profile.asp?authorid=1091969" target=_blank>Профиль автора в SCIENCE INDEX</a><br><a href="author_items.asp?authorid=1091969" target=_blank>Список публикаций в РИНЦ</a>'><b><font color=#00008f>DENISOV&nbsp;M.</font></b></span><img src='/images/about_author.gif' border=0 hspace=2 height=10 width=9 class='help pointer' title='ORCID:&nbsp;<a href="https://orcid.org/0000-0002-1216-610X" target=_blank>0000-0002-1216-610X</a>&nbsp;&nbsp; '><font color=#000000><sup>1</sup></font>,</div> <div style='display: inline-block; white-space: nowrap'><span class='help pointer' title='<b><font color=#F26C4F>Прокудин Артем Александрович</font></b><br>Волгоградский государственный технический университет<br><a href="author_profile.asp?authorid=1178666" target=_blank>Профиль автора в SCIENCE INDEX</a><br><a href="author_items.asp?authorid=1178666" target=_blank>Список публикаций в РИНЦ</a>'><b><font color=#00008f>PROKUDIN&nbsp;A.</font></b></span><img src='/images/about_author.gif' border=0 hspace=2 height=10 width=9 class='help pointer' title='ORCID:&nbsp;<a href="https://orcid.org/0000-0002-0694-0808" target=_blank>0000-0002-0694-0808</a>&nbsp;&nbsp; '><font color=#000000><sup>1</sup></font></div>
+<div style="height:10px;"></div>
+<font color=#000000><sup>1</sup></font>&nbsp;<span class='help1 pointer' title='<b><font color=#F26C4F>Волгоградский государственный технический университет</font></b> (Волгоград)<br><a href="org_profile.asp?id=1000" target=_blank>Профиль организации в SCIENCE INDEX</a><br><a href="org_items.asp?orgsid=1000" target=_blank>Список публикаций в РИНЦ</a>'><font color=#00008f>Volgograd State Technical University</font></span>, Lenin Ave, 28<br>
+</td></tr>
+</table>
+
+<div style="height:12px;"></div>
+
+
+
+<table width=580 border=0 cellspacing=0 cellpadding=2>
+
+
+
+<tr><td width=574 align=center valign=middle>
+Тип:&nbsp;<font color=#00008f>статья в журнале - материалы конференции</font>
+<span style="margin-left:20px;"></span>Язык:&nbsp;<font color=#00008f>английский</font>
+</td></tr>
+
+<tr><td></td></tr>
+
+<tr><td width=574 align=center valign=middle>
+Том:&nbsp;<font color=#00008f>12677 LNCS</font>
+<span style="margin-left:20px;"></span>Год:&nbsp;<font color=#00008f>2021</font>
+
+<span style="margin-left:20px;"></span><div style='display: inline-block; white-space: nowrap'>Страницы:&nbsp;<font color=#00008f>52-59</font></div>
+
+
+
+</td></tr>
+
+
+
+</table>
+
+
+
+<div style="height:10px;"></div>
+<table width=550 border=0 cellspacing=0 cellpadding=3>
+<tr><td colspan=2 align=left>
+<font color=#000000>ЖУРНАЛ:</font></td></tr>
+<tr><td width=34>&nbsp;</td><td width=504 align=left valign=middle>
+<div style="height:3px;"></div>
+
+<a href="contents.asp?id=46939827" title="Содержание выпусков этого журнала">LECTURE NOTES IN COMPUTER SCIENCE</a>
+<br>Учредители:&nbsp;Springer Nature Switzerland
+<br>
+ISSN:&nbsp;<font color=#00008f>0302-9743</font><span style="margin-left:20px;"></span>eISSN:&nbsp;<font color=#00008f>1611-3349</font><span style="margin-left:20px;"></span>
+
+</td></tr></table>
+
+
+
+<div style="height:10px;"></div>
+<table width=550 border=0 cellspacing=0 cellpadding=3>
+<tr><td colspan=2 align=left>
+<font color=#000000>КЛЮЧЕВЫЕ СЛОВА:</font></td></tr>
+<tr><td width=34>&nbsp;</td><td width=504 align=left valign=middle>
+<div style="height:3px;"></div>
+<a href="keyword_items.asp?id=348193">ADAPTIVE LEARNING</a>, 
+<a href="keyword_items.asp?id=669417">BLOOM'S TAXONOMY</a>, 
+<a href="keyword_items.asp?id=1130993">COGNITIVE LEARNING</a>, 
+<a href="keyword_items.asp?id=21195407">CONSTRAINT-BASED TUTORS</a>, 
+<a href="keyword_items.asp?id=441617">INTELLIGENT TUTORING SYSTEM</a>
+</td></tr>
+</table>
+
+<div style="height:10px;"></div>
+<table width=550 border=0 cellspacing=0 cellpadding=3>
+<tr><td colspan=2 align=left>
+<font color=#000000>АННОТАЦИЯ:</font></td></tr>
+<tr><td width=34>&nbsp;</td><td width=504 align=left valign=middle>
+
+<div id="abstract1" style="width:504px; border:0; margin:0; padding:0; text-align:left;"><p align=justify style='margin-top: 0.3em;'>Intelligent tutoring systems become increasingly common in assisting human learners, but they are often aimed at isolated domain tasks without creating a scaffolding system from lower- to higher-level cognitive skills. We designed and implemented an intelligent tutoring system CompPrehension aimed at the comprehension level of Bloom’s taxonomy that often gets neglected in favour of the higher levels. The system features plugin-based architecture, easing adding new domains and learning strategies; using formal models and software reasoners to solve the problems and judge the answers; and generating explanatory feedback and follow-up questions to stimulate the learners’ thinking. The architecture and workflow are shown. We demonstrate the process of interacting with the system in the Control Flow Statements domain. The advantages and limits of the developed system are discussed.</div>
+
+</td></tr></table>
+
+
+
+<div style="height:10px;"></div>
+<table width=550 border=0 cellspacing=0 cellpadding=3>
+<tr><td colspan=2 align=left>
+<font color=#000000>БИБЛИОМЕТРИЧЕСКИЕ ПОКАЗАТЕЛИ:</font></td></tr>
+<tr><td width=34>&nbsp;</td><td width=504 align=left valign=middle>
+<div style="height:3px;"></div>
+
+<table width=100% border=0 cellspacing=0 cellpadding=3>
+
+<tr align=left valign=bottom>
+<td width=52%><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Учитывается или нет данная публикация в РИНЦ. Некоторые категории публикаций (например, статьи в реферативных, научно-популярных, информационных журналах) могут быть размещены на платформе elibrary.ru, но не учитываются в РИНЦ. Также не учитываются статьи в журналах и сборниках, исключенных из РИНЦ за нарушение научной и издательской этики.</p>'>&nbsp;&nbsp;Входит в РИНЦ:&nbsp;<font color=#00008f>да</font></td>
+
+
+<td width=48%><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Число цитирований данной публикации из публикаций, входящих в РИНЦ. Сама публикация при этом может и не входить в РИНЦ. Для сборников статей и книг, индексируемых в РИНЦ на уровне отдельных глав, указывается суммарное число цитирований всех статей (глав) и сборника (книги) в целом.</p>'>&nbsp;&nbsp;Цитирований в РИНЦ:&nbsp;<a href="cit_items.asp?id=46994849" title="Список публикаций в РИНЦ, цитирующих данную">3</a></td></tr>
+
+<tr align=left valign=bottom>
+<td><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Входит или нет данная публикация в ядро РИНЦ. Ядро РИНЦ включает все статьи, опубликованные в журналах, индексируемых в базах данных Web of Science Core Collection, Scopus или Russian Science Citation Index (RSCI).</p>'>&nbsp;&nbsp;Входит в ядро РИНЦ:&nbsp;<font color=#00008f><span id="InCoreRisc">да</span></font></td>
+
+<td><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Число цитирований данной публикации из публикаций, входящих в ядро РИНЦ. Сама публикация при этом может не входить в ядро РИНЦ. Для сборников статей и книг, индексируемых в РИНЦ на уровне отдельных глав, указывается суммарное число цитирований всех статей (глав) и сборника (книги) в целом.</p>'>&nbsp;&nbsp;Цитирований из ядра РИНЦ:&nbsp;<font color=#00008f>3</font></td>
+</tr>
+
+
+<tr align=left valign=bottom>
+<td><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Наличие в РИНЦ информации о рецензировании данной публикации.</p>'>&nbsp;&nbsp;Рецензии:&nbsp;<font color=#00008f>нет данных</font></td>
+
+<td><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Процентиль журнала в рейтинге Science Index за 2023 год.</p>'>&nbsp;&nbsp;Процентиль журнала в рейтинге SI:&nbsp;<font color=#00008f></font></td>
+
+</tr>
+
+
+</table>
+
+</td></tr></table>
+
+<div style="height:10px;"></div>
+<table width=550 border=0 cellspacing=0 cellpadding=3>
+<tr><td colspan=2 align=left>
+<font color=#000000>ТЕМАТИЧЕСКИЕ РУБРИКИ:</font></td></tr>
+<tr><td width=34>&nbsp;</td><td width=504 align=left valign=middle>
+<div style="height:3px;"></div>
+
+<table width=100% border=0 cellspacing=0 cellpadding=3>
+<tr align=left valign=bottom>
+
+<tr align=left valign=top>
+<td width=27%><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Основная рубрика публикации в соответствии с рубрикатором OECD. Авторы, зарегистрированные в системе Science Index, имеют возможность уточнять тематические рубрики своих публикаций.</p>'>&nbsp;&nbsp;Рубрика&nbsp;OECD:&nbsp;</td><td width=73%><font color=#00008f><span id="rubric_oecd">Computer and information sciences</span></font>&nbsp;&nbsp;&nbsp;<font color=#000000>(<a href="javascript:item_oecd_add()" title="Добавить или изменить рубрику OECD"><font color=#F26C4F><span id="change_oecd">изменить</span></font></a>)</font></td>
+</tr>
+</table>
+
+<table width=100% border=0 cellspacing=0 cellpadding=3>
+<tr align=left valign=bottom>
+
+<tr align=left valign=top>
+<td width=27%><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Основная рубрика публикации в соответствии с рубрикатором ASJC, используемом в Scopus. Авторы, зарегистрированные в системе Science Index, имеют возможность уточнять тематические рубрики своих публикаций.</p>'>&nbsp;&nbsp;Рубрика&nbsp;ASJC:&nbsp;</td><td width=73%><font color=#00008f><span id="rubric_asjc">нет</span></font>&nbsp;&nbsp;&nbsp;<font color=#000000>(<a href="javascript:item_asjc_add()" title="Добавить или изменить рубрику ASJC"><font color=#F26C4F><span id="change_asjc">добавить</span></font></a>)</font></td>
+</tr>
+</table>
+
+<table width=100% border=0 cellspacing=0 cellpadding=3>
+<tr align=left valign=bottom>
+
+<tr align=left valign=top>
+<td width=27%><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Основная рубрика публикации в соответствии с рубрикатором ГРНТИ. Авторы, зарегистрированные в системе Science Index, имеют возможность уточнять тематические рубрики своих публикаций.</p>'>&nbsp;&nbsp;Рубрика&nbsp;ГРНТИ:&nbsp;</td><td width=73%><font color=#00008f><span id="rubric_grnti">нет</span></font>&nbsp;&nbsp;&nbsp;<font color=#000000>(<a href="javascript:item_grnti_add()" title="Добавить или изменить основную рубрику публикации"><font color=#F26C4F><span id="change_grnti">добавить</span></font></a>)</font></td>
+</tr>
+</table>
+
+<table width=100% border=0 cellspacing=0 cellpadding=3>
+<tr align=left valign=bottom>
+
+<tr align=left valign=top>
+<td width=27%><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Основная рубрика публикации в соответствии с новой номенклатурой специальностей ВАК. Авторы, зарегистрированные в системе Science Index, имеют возможность уточнять тематические рубрики своих публикаций.</p>'>&nbsp;&nbsp;Специальность&nbsp;ВАК:&nbsp;</td><td width=73%><font color=#00008f><span id="rubric_vak">нет</span></font>&nbsp;&nbsp;&nbsp;<font color=#000000>(<a href="javascript:item_vak_add()" title="Добавить или изменить специальность ВАК"><font color=#F26C4F><span id="change_vak">добавить</span></font></a>)</font></td>
+</tr>
+</table>
+
+</td></tr></table>
+
+
+<div style="height:10px;"></div>
+<table width=550 border=0 cellspacing=0 cellpadding=3>
+<tr><td colspan=2 align=left>
+<font color=#000000>АЛЬТМЕТРИКИ:</font></td></tr>
+<tr><td width=34>&nbsp;</td><td width=504 align=left valign=middle>
+<div style="height:3px;"></div>
+
+<table width=100% border=0 cellspacing=0 cellpadding=3>
+<tr align=left valign=bottom>
+
+<td width=30%><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Число просмотров страницы с описанием и аннотацией публикации посетителями elibrary.ru. Учитываются все просмотры, в том числе сделанные незарегистрированными пользователями. Повторные просмотры одним и тем же пользователем не учитываются. Зависит от года издания и появления публикации на сайте. В скобках указано число зарегистрированных пользователей, просматривавших данную страницу.</p>'>&nbsp;&nbsp;Просмотров:&nbsp;<font color=#00008f>15 (11)</font></td>
+
+<td width=35%><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Число загрузок полного текста публикации посетителями elibrary.ru. Если полный текст публикации отсутствует на elibrary.ru, показатель не рассчитывается. Повторные загрузки одним и тем же пользователем не учитываются. Зависит от года издания и появления публикации на сайте, а также от режима доступа к полному тексту (открытый или по подписке). В скобках указано число уникальных авторов, загрузивших данную публикацию.</p>'>&nbsp;&nbsp;Загрузок:&nbsp;<font color=#00008f>0 (0)</font></td>
+
+<td width=35%><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Число персональных подборок пользователей elibrary.ru, которые включают данную публикацию.</p>'>&nbsp;&nbsp;Включено в подборки:&nbsp;<font color=#00008f>3</font></td>
+</tr>
+
+<tr align=left valign=bottom>
+
+<td width=30%><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Число оценок публикации, сделанных учеными, зарегистрированными в системе Science Index. Для просмотра распределения оценок щелкните мышью на этом числе.</p>'>&nbsp;&nbsp;Всего оценок:&nbsp;<font color=#00008f><span id="score_count">0</span></font></td>
+
+<td width=35%><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Средняя оценка публикации учеными, зарегистрированными в системе Science Index. Значение соответствует следующим уровням оценки публикации:</p><br><table width=100% cellspacing=0 cellpadding=3 border=0>
+<tr><td width=15% align=center valign=top>
+<span style="font-size: 18pt; color: #F26C4F; font-family: Times New Roman, Times, serif; padding: 0;">5</span>
+</td>
+<td width=85% align=left valign=top><div>публикация международного уровня (на уровне требований Web of Science Core Collection)</div>
+</td></tr>
+
+<tr><td align=center valign=top>
+<span style="font-size: 18pt; color: #F26C4F; font-family: Times New Roman, Times, serif; padding: 0;">4</span>
+</td>
+<td align=left valign=top><div>публикация высокого уровня (достаточного для учета при защите докторской диссертации, достойна включения в ядро РИНЦ)</div></td></tr>
+
+<tr><td align=center valign=top>
+<span style="font-size: 18pt; color: #F26C4F; font-family: Times New Roman, Times, serif; padding: 0;">3</span>
+</td>
+<td align=left valign=top><div>публикация среднего уровня (достаточного для учета при защите кандидатской диссертации)</div></td></tr>
+
+<tr><td align=center valign=top>
+<span style="font-size: 18pt; color: #F26C4F; font-family: Times New Roman, Times, serif; padding: 0;">2</span>
+</td>
+<td align=left valign=top><div>публикация начального уровня (как правило, подготовленная студентами, аспирантами, молодыми учеными, при этом уровень достаточен для ее включения в РИНЦ)</div></td></tr>
+
+<tr><td align=center valign=top>
+<span style="font-size: 18pt; color: #F26C4F; font-family: Times New Roman, Times, serif; padding: 0;">1</span>
+</td>
+<td align=left valign=top><div>не научная, нарушающая научную этику или очень слабая публикация (должна быть исключена из РИНЦ)</div></td></tr>
+
+</table>'>&nbsp;&nbsp;Средняя оценка:&nbsp;<font color=#00008f><span id="avg_score"></span></font>
+</td>
+
+<td width=35%><img src="/images/but_orange_question.gif" class="imghelp help" title='<p>Число отзывов о публикации, сделанных учеными, зарегистрированными в системе Science Index. Для просмотра всех отзывов щелкните мышью на этом числе.</p>'>&nbsp;&nbsp;Всего отзывов:&nbsp;<font color=#00008f><span id="comment_count">0</span></font></td>
+</tr></table>
+
+
+</td></tr></table>
+
+
+<div style="height:10px;"></div>
+<table width=550 border=0 cellspacing=0 cellpadding=3>
+<tr><td colspan=2 align=left>
+<font color=#000000>ИНФОРМАЦИЯ О ФИНАНСОВОЙ ПОДДЕРЖКЕ:</font></td></tr>
+<tr><td width=34>&nbsp;</td><td width=504 align=left valign=middle>
+
+<div style="height:3px;"></div>
+<p>The reported study was funded by RFBR, project number 20-07-00764.
+<div style="height:5px;"></div>
+
+</td></tr></table>
+
+
+<table width=100% border=0 cellspacing=1 cellpadding=2 style="table-layout:fixed; word-wrap:break-word; overflow:hidden">
+
+<tr bgcolor=#f5f5f5><td width=6% align=right valign=top nowrap><font color=#000000>1.&nbsp;</font></td>
+<td width=89% align=justify valign=top><font color=#000000>
+<span style="line-height:1.0;">КОНЦЕПТУАЛЬНОЕ МОДЕЛИРОВАНИЕ ОБЛАСТИ ЗНАНИЙ НА УРОВНЕ ПОНИМАНИЯ ДЛЯ СИСТЕМ ИНТЕЛЛЕКТУАЛЬНОЙ ПОДДЕРЖКИ ПРИНЯТИЯ РЕШЕНИЙ В ОБРАЗОВАТЕЛЬНОМ ПРОЦЕССЕ</span><br><i>Сычев О.А.</i><br>НИР: грант&nbsp;№&nbsp;20-07-00764. Российский фонд фундаментальных исследований. 2020. &nbsp;<font color=#F26C4F>EDN:</font>&nbsp;<a href="https://elibrary.ru/heunzc" target=_blank rel="nofollow">HEUNZC</a>
+</font></td><td align=center valign=top width=5%><div style="height:5px;"></div><a href="item.asp?id=50702961" title="Перейти на описание гранта" class="help1" target=_blank><img src="/images/go_url.png" height=15 width=15 border=0></a></td>
+</tr>
+
+</table>
+
+<div style="height:10px;"></div>
+
+
+<div id="your_notes" class="collapsed">
+<table width=550 border=0 cellspacing=0 cellpadding=3>
+<tr><td colspan=2 align=left>
+<font color=#000000>ВАША ЗАМЕТКА:</font></td></tr>
+<tr><td width=34>&nbsp;</td><td width=504 align=left valign=middle>
+<div style="height:3px;"></div>
+<span id="your_notes_text"><p></p></span>
+</td></tr></table>
+<div style="height:10px;"></div>
+</div>
+
+
+
+<div style="height:10px;"></div>
+<table width=580 border=0 cellspacing=0 cellpadding=3>
+<tr><td width=574 align=left valign=middle>
+<font color=#000000>СПИСОК ЦИТИРУЕМОЙ ЛИТЕРАТУРЫ:</font>
+<div style="height:5px;"></div>
+</td></tr></table>
+
+<table width=100% border=0 cellspacing=1 cellpadding=2 style="table-layout:fixed; word-wrap:break-word; overflow:hidden">
+
+<tr bgcolor=#f5f5f5><td width=6% align=right valign=top nowrap><font color=#000000>1.&nbsp;</font></td>
+<td width=89% align=justify valign=top><font color=#000000>
+Anikin, A., Sychev, O.: Ontology-based modelling for learning on bloom’s taxonomy comprehension level. In: Samsonovich, A.V. (ed.) BICA 2019. AISC, vol. 948, pp. 22–27. Springer, Cham (2020). 10.1007/978-3-030-25719-4 4.</font>&nbsp; <font color=#F26C4F>DOI:</font>&nbsp;<a href="https://doi.org/10.1007/978-3-030-25719-44" target=_blank rel="nofollow">10.1007/978-3-030-25719-44</a>&nbsp; <font color=#F26C4F>EDN:</font>&nbsp;<a href="https://elibrary.ru/fzlzgo" target=_blank rel="nofollow">FZLZGO</a>
+
+</td><td align=center valign=top width=5%><div style="height:5px;"></div><a href="item.asp?id=41624408" title="Перейти на описание цитируемой публикации" class="help1" target=_blank><img src="/images/go_url.png" height=15 width=15 border=0></a></td>
+</tr>
+
+<tr bgcolor=#f5f5f5><td width=6% align=right valign=top nowrap><font color=#000000>2.&nbsp;</font></td>
+<td width=89% align=justify valign=top><font color=#000000>
+Atzeni, M., Atzori, M.: CodeOntology: RDF-ization of source code. Lecture Notes in Computer Science (including subseries Lecture Notes in Artificial Intelligence and Lecture Notes in Bioinformatics) (2017). 10.1007/978-3-319-68204-4 2.</font>&nbsp; <font color=#F26C4F>DOI:</font>&nbsp;<a href="https://doi.org/10.1007/978-3-319-68204-42" target=_blank rel="nofollow">10.1007/978-3-319-68204-42</a>
+</td><td align=center valign=top width=5%>&nbsp;</td>
+</tr>
+
+<tr bgcolor=#f5f5f5><td width=6% align=right valign=top nowrap><font color=#000000>3.&nbsp;</font></td>
+<td width=89% align=justify valign=top><font color=#000000>
+Bloom, B.S., Engelhart, M.B., Furst, E.J., Hill, W.H., Krathwohl, D.R.: Taxonomy of Educational Objectives: The Classification of Educational Goals. Handbook 1: Cognitive Domain. Longmans Green, New York (1956).</font>
+</td><td align=center valign=top width=5%>&nbsp;</td>
+</tr>
+
+<tr bgcolor=#f5f5f5><td width=6% align=right valign=top nowrap><font color=#000000>4.&nbsp;</font></td>
+<td width=89% align=justify valign=top><font color=#000000>
+Brusilovsky, P., Su, H.-D.: Adaptive visualization component of a distributed web-based adaptive educational system. In: Cerri, S.A., Gouardères, G., Paraguaçu, F. (eds.) ITS 2002. LNCS, vol. 2363, pp. 229–238. Springer, Heidelberg (2002). 10.1007/3-540-47987-2 27.</font>&nbsp; <font color=#F26C4F>DOI:</font>&nbsp;<a href="https://doi.org/10.1007/3-540-47987-227" target=_blank rel="nofollow">10.1007/3-540-47987-227</a>
+</td><td align=center valign=top width=5%>&nbsp;</td>
+</tr>
+
+<tr bgcolor=#f5f5f5><td width=6% align=right valign=top nowrap><font color=#000000>5.&nbsp;</font></td>
+<td width=89% align=justify valign=top><font color=#000000>
+Crow, T., Luxton-Reilly, A., Wuensche, B.: Intelligent tutoring systems for programming education. In: Proceedings of the 20th Australasian Computing Education Conference on-ACE 2018. ACM Press (2018). https://doi.org/10.1145/3160489.3160492.</font>
+</td><td align=center valign=top width=5%>&nbsp;</td>
+</tr>
+
+<tbody ID="list_refs"></tbody>
+
+<script type="text/javascript">
+function show_refs() {
+  $('#show_reflist').html("<tr><td colspan=3 align=center>Загружается (всего ссылок: 16) ...</td></tr>");
+  $.get("get_item_refs.asp?id=46994849&rand=" + Math.random(), function(data) {
+    $('#list_refs').html(data);
+    $('#show_reflist').html('');
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+  })
+}
+</script>
+
+<tr><td colspan=3><div style="height:6px;"></div></td></tr>
+<tbody ID="show_reflist">
+<tr><td align=right valign=middle><span class="win_expandable" style="color:#F26C4F; margin:0 5px 0 0;" onClick="show_refs()">▼</span></td><td align=left valign=middle><a href="javascript:show_refs()">Показать весь список литературы (всего ссылок: 16)</a></td><td></td></tr>
+</tbody>
+
+
+
+</table>
+
+<div style="height:10px;"></div>
+
+<div style="height:10px;"></div>
+<table width=550 border=0 cellspacing=0 cellpadding=3>
+<tr><td colspan=2 align=left>ОБСУЖДЕНИЕ:</td></tr>
+<tr><td width=30></td><td width=508 align=left valign=middle>
+
+</td></tr></table>
+
+<table width=100% cellspacing=3 cellpadding=0 border=0>
+<tr><td width=10% align=right valign=top><a href="javascript:new_comments()"><img src="images/but_orange.gif" width=15 height=15 hspace=3 border=0 vspace=3></a></td><td width=90% align=left valign=middle><a href="javascript:new_comments()">Добавить новый комментарий к этой публикации</a>
+</td></tr></table>
+
+
+</div>
+</td>
+<td align=right valign=top>
+
+<div id="panel_default" style="position: relative; width: 200px; height:0; margin: 0; border: 1px; padding: 0"></div>
+<div id="panel" style="position: relative; width: 200px; margin: 0; border: 0; padding: 0">
+
+<div style="width: 190px;" class="right-panel">
+
+<table width=190 cellspacing=0 cellpadding=3 border=0>
+
+<input type="hidden" name="itembox_name" value="">
+<input type="hidden" name="id" value="46994849">
+<input type="hidden" name="did" value="46994849">
+<input type="hidden" name="sid" value="633083938">
+<input type="hidden" name="noteid" value="46994849">
+<input type="hidden" name="disspage" value="">
+<input type="hidden" name="counterid" value="">
+<input type="hidden" name="commentid" value="">
+<input type="hidden" name="reply" value="">
+<input type="hidden" name="linkid" value="">
+<input type="hidden" name="paysum" value="">
+<input type="hidden" name="payitemid" value="">
+<input type="hidden" name="authorid" value="1091969">
+<input type="hidden" name="tid46994849" value="46994849">
+<input type="hidden" name="filenum" value="1">
+<input type="hidden" name="fileid" value="46994849">
+<input type="hidden" name="urlnum" value="1">
+<input type="hidden" name="items_all" value="">
+
+<tr><td colspan=2 align=center valign=top><font color=#F26C4F><b>ИНСТРУМЕНТЫ</b></font><div style="height:10px;"></div></td></tr>
+
+
+
+<tr><td width=15% align=center valign=top>
+<a href="author_items.asp?pagenum=1&selid=46994849"><img src="images/but_orange.gif" width=15 height=15 hspace=3 border=0></a>
+
+</td>
+
+<td width=85% align=left valign=middle>
+<a href="author_items.asp?pagenum=1&selid=46994849">Вернуться в список публикаций автора</a>
+
+</td></tr>
+
+<tr><td width=15% align=center valign=top>
+<a href="item.asp?id=47078869"><img src="images/but_orange.gif" width=15 height=15 hspace=3 border=0></a></td>
+<td width=85% align=left valign=middle><a href="item.asp?id=47078869">Следующая&nbsp;публикация</a>
+</td></tr>
+
+<tr><td width=15% align=center valign=top>
+<a href="item.asp?id=59851868"><img src="images/but_orange.gif" width=15 height=15 hspace=3 border=0></a></td>
+<td width=85% align=left valign=middle><a href="item.asp?id=59851868">Предыдущая&nbsp;публикация</a>
+</td></tr>
+
+
+<tr><td colspan=2><div style="height:10px;"></div></td></tr>
+
+
+<tr><td width=15% align=center valign=top>
+<a href="cit_items.asp?id=46994849"><img src="images/but_orange.gif" width=15 height=15 hspace=3 border=0></a></td>
+<td width=85% align=left valign=middle><a href="cit_items.asp?id=46994849">Список публикаций, цитирующих данную</a>
+</td></tr>
+
+<tr><td width=15% align=center valign=top>
+<a href='https://scholar.google.com/scholar?q="CompPrehension - Model-Based Intelligent Tutoring System on Comprehension Level"&hl=ru&as_sdt=0%2C5&as_ylo=2021&as_yhi=2021' target=_blank rel="nofollow"><img src="images/but_orange.gif" width=15 height=15 hspace=3 border=0></a></td>
+<td width=85% align=left valign=middle><a href='https://scholar.google.com/scholar?q="CompPrehension - Model-Based Intelligent Tutoring System on Comprehension Level"&hl=ru&as_sdt=0%2C5&as_ylo=2021&as_yhi=2021' target=_blank rel="nofollow">Список статей в Google Академия, цитирующих данную</a>
+</td></tr>
+
+<tr><td width=15% align=center valign=top>
+<a href="javascript:for_reference()"><img src="images/but_orange.gif" width=15 height=15 hspace=3 border=0></a></td>
+<td width=85% align=left valign=middle><a href="javascript:for_reference()">Ссылка для цитирования</a>
+</td></tr>
+<tr><td colspan=2><div style="height:10px;"></div></td></tr>
+
+<tr><td width=15% align=center valign=top>
+<a href="javascript:itembox_add()"><img src="images/but_orange.gif" width=15 height=15 hspace=3 border=0></a></td>
+<td width=85% align=left valign=middle><a href="javascript:itembox_add()">Добавить публикацию в подборку</a></td></tr>
+
+
+
+<tr><td colspan=2 align=center><div class="formfr"><select name="itemboxid" id="itemboxid" style="width:180px" class="input">
+
+<option value="0" selected>Новая подборка
+</select></div>&nbsp;</td></tr>
+
+
+
+
+<tr><td colspan=2><div style="height:10px;"></div></td></tr>
+<tr><td width=15% align=center valign=top><a href="author_items.asp?authorid=1091969"><img src="images/ast_sm.gif" width=16 height=18 border=0></a></td>
+<td width=85% align=left valign=middle><a href="author_items.asp?authorid=1091969">Данная публикация входит в список моих работ</a></td></tr>
+
+
+
+<tr><td colspan=2><div style="height:10px;"></div></td></tr>
+<tr><td width=15% align=center valign=top>
+<a href="javascript:edit_notes()"><img src="images/but_orange.gif" width=15 height=15 hspace=3 border=0 class="help" title='<p>Вы можете добавить свою персональную заметку к данной публикации, которая поможет Вам в работе с публикациями и подборками публикаций на elibrary.ru. Ваша заметка будет показываться только Вам.</p>'></a></td>
+<td width=85% align=left valign=middle><a href="javascript:edit_notes()">Редактировать Вашу заметку к публикации</a>
+</td></tr>
+
+<tr><td width=15% align=center valign=top>
+<a href="javascript:new_comments()"><img src="images/but_orange.gif" width=15 height=15 hspace=3 border=0></a></td>
+<td width=85% align=left valign=middle><a href="javascript:new_comments()">Обсудить эту публикацию с другими читателями</a>
+</td></tr>
+
+
+
+
+</FORM>
+
+<tr><td width=15% align=center valign=top>
+<a href='/similar_items.asp?itemid=46994849'><img src="images/but_orange.gif" width=15 height=15 hspace=3 border=0></a></td>
+<td width=85% align=left valign=middle><a href='/similar_items.asp?itemid=46994849'>Найти близкие по тематике публикации</a>
+</td></tr>
+
+
+
+<tr><td colspan=2><div style="height:10px;"></div></td></tr>
+<tr><td width=15% align=center valign=top>
+<img src="images/but_orange.gif" width=15 height=15 hspace=3 border=0></td>
+<td width=85% align=left valign=middle><font color=#00008f>Дата размещения:</font><br><font color=#000000>28.10.2021</font>
+</td></tr>
+
+
+
+</table>
+</div>
+
+</div>
+
+</td></tr></table>
+</td></tr></table>
+
+
+<br><br>
+<table width=970 height=40 border=0 cellpadding=0 cellspacing=0 id="footer">
+<tr align=center valign=middle class="menug">
+<td width=15% valign="bottom">
+
+</td>
+<td width=70%><font color=#00008f><span style="position: relative; top: 3px; right: 15px; color: #F26C4F;">*</span><a href="/copyright.asp">&copy; 2000-2024 ООО НАУЧНАЯ ЭЛЕКТРОННАЯ БИБЛИОТЕКА. Все права защищены</a></font><span style="position: relative; top: 3px; left: 15px; color: #F26C4F;">*</span></td>
+<td width=15% valign="bottom">
+
+</td>
+</tr></table>
+
+<br><br><br>
+</td></tr></table>
+</html>
+
