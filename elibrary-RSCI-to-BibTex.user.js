@@ -46,6 +46,10 @@ function min_string(a, b) {
     return a < b ? a : b;
 }
 
+function getElementByText(text) {
+  const xpath = `//node()[normalize-space(text())='${text.trim()}']`;
+  return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+}
 
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000; /* 24 часа */
 
