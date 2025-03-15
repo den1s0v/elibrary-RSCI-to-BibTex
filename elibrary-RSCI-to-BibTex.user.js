@@ -237,7 +237,7 @@ function divide_authors_info(authors_raw_list) {
     return [authors, affiliations];
 }
 
-class ElibraryArticleMetadata {
+class ElibraryPublicationMetadata {
     constructor(url, doi, title, authors, affiliations, type, language, volume, number, year, pages, journal, abstract, publisher, holder, reqnumber, publdate, regdate, prnumber) {
         this._url = url || '';
         this._doi = doi || '';
@@ -353,13 +353,13 @@ class ElibraryArticleMetadata {
 
     static parse(document) {
         try {
-            let metadata = new ElibraryArticleMetadata();
+            let metadata = new ElibraryPublicationMetadata();
 
             let tables = document.querySelectorAll('table');
             let di = -2;
 
             const urls_table = tables[di + 24];
-            ElibraryArticleMetadata.recognize_urls_table(urls_table, metadata);
+            ElibraryPublicationMetadata.recognize_urls_table(urls_table, metadata);
 
             metadata._title = tables[di + 25].querySelector('.bigtext').innerText;
 
@@ -370,7 +370,7 @@ class ElibraryArticleMetadata {
             [metadata._authors, metadata._affiliations] = divide_authors_info(authors_raw_list);
 
             const bibl_meta_table = tables[di + 27];
-            ElibraryArticleMetadata.recognize_biblio_metadata_table(bibl_meta_table, metadata);
+            ElibraryPublicationMetadata.recognize_biblio_metadata_table(bibl_meta_table, metadata);
 
             const journal_table = tables[di + 28];
             const table_caption = journal_table.querySelector('td font').innerText;
@@ -397,7 +397,7 @@ class ElibraryArticleMetadata {
 
             return metadata;
         } catch (e) {
-            console.log('Exception in ElibraryArticleMetadata.parse:');
+            console.log('Exception in ElibraryPublicationMetadata.parse:');
             console.error(e);
             return null;
         }
@@ -714,7 +714,7 @@ function insert_to_page(bibtex_str, many=false) {
 function handlePublicationPage() {
     'use strict';
     try {
-        const metadata = ElibraryArticleMetadata.parse(document);
+        const metadata = ElibraryPublicationMetadata.parse(document);
         let bibtexEntry = metadata.get_bibtex_entry();
 
         // Вставляем BibTeX на страницу с интерактивными элементами
@@ -742,7 +742,7 @@ async function fetchPublicationBibtex(publicationId) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, 'text/html');
 
-    const metadata = ElibraryArticleMetadata.parse(doc);
+    const metadata = ElibraryPublicationMetadata.parse(doc);
     let bibtexEntry = metadata.get_bibtex_entry();
     CacheManager.setCache(cacheKey, bibtexEntry);
 
