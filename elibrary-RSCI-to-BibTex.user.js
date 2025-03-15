@@ -749,7 +749,7 @@ async function fetchPublicationBibtex(publicationId) {
     return bibtexEntry;
 }
 
-async function handleAuthorPage() {
+async function handleAuthorPage(renumerate_list=false) {
     ProgressIndicator.init_once();
     const progress = new ProgressIndicator();
     // progress.show();
@@ -765,8 +765,11 @@ async function handleAuthorPage() {
 
     const bibtexEntries = [];
     let failed = 0;
-    for (const publicationId of publicationIds) {
+    for (const publicationLink of publicationLinks) {
         try {
+            const url = new URL(publicationLink.href);
+            const publicationId = url.searchParams.get('id');
+
             const bibtexEntry = await fetchPublicationBibtex(publicationId);
             if (!bibtexEntry) {
                 console.warn(`No info for publication with ID=${publicationId}`);
@@ -774,18 +777,28 @@ async function handleAuthorPage() {
                 continue;
             }
 
-            bibtexEntries.push(`% Публикация ${bibtexEntries.length + 1}.\n${bibtexEntry}`);
+            let pub_index;
+            if (renumerate_list) {
+                pub_index = bibtexEntries.length + 1;
+            } else {
+                const list_row = publicationLink.parentElement.parentElement.parentElement;
+                const index_in_list_str = (list_row.children[0].querySelector('font') || row.querySelector('font')).innerText;
+                pub_index = +index_in_list_str.match(/\d+/);
+            }
+
+            bibtexEntries.push(`% Публикация ${pub_index}.\n${bibtexEntry}`);
 
             progress.setProgress(bibtexEntries.length, publicationIds.length);
         } catch (e) {
             console.log('While collecting publications, exception occured...');
             console.error(e);
+            failed += 1;
         }
     }
 
     const result_count = bibtexEntries.length;
     progress.clearProgress();
-    progress.showNotification(`Получено записей bibtex: ${result_count}, c ошибками: ${failed}, всего ссылкок: ${publicationIds.length}`, 20, true);
+    progress.setText(`Получено записей bibtex: ${result_count}, c ошибками: ${failed}, всего ссылкок: ${publicationIds.length}`/*, 20, true*/);
 
     if (result_count > 0) {
         const combinedBibtex = bibtexEntries.join('\n\n');
