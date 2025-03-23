@@ -828,13 +828,13 @@ async function handleAuthorPage(renumerate_list=false) {
         if (currentPath.match(/\/item\.asp\?id=\d+/)) {
             // Страница отдельной публикации
             handlePublicationPage();
-        } else if (currentPath.match(/\/author_items\.asp\?authorid=\d+/)) {
-            // Страница автора
-            await handleAuthorPage();
-        } else if (currentPath.match(/\/author_items\.asp/)) {
-            // Страница результатов поиска
-            await handleAuthorPage();
-            // handleSearchResultsPage();
+        // } else if (currentPath.match(/\/author_items\.asp\?authorid=\d+/)) {
+        //     // Страница автора
+        //     await handleAuthorPage();
+        // } else if (currentPath.match(/\/author_items\.asp/)) {
+        //     // Страница результатов поиска
+        //     await handleAuthorPage();
+        //     // handleSearchResultsPage();
         } else {
             console.log('Тип страницы не поддерживается:', currentUrl);
         }
