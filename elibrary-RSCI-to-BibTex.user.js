@@ -166,18 +166,36 @@ class CollectedBibtexStore {
         }, null, 2);
     }
 
-    static downloadJson() {
-        const jsonContent = this.exportJson();
-        const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8' });
+    static exportBibtex() {
+        const records = this.getAllRecords();
+        const bibtexEntries = records
+            .map((record) => String(record.bibtex || '').trim())
+            .filter((value) => !!value);
+        return bibtexEntries.join('\n\n');
+    }
+
+    static downloadContent(filename, content, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
         const blobUrl = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
-        const datePart = new Date().toISOString().slice(0, 10);
         anchor.href = blobUrl;
-        anchor.download = `elibrary-bibtex-${datePart}.json`;
+        anchor.download = filename;
         document.body.appendChild(anchor);
         anchor.click();
         anchor.remove();
         URL.revokeObjectURL(blobUrl);
+    }
+
+    static downloadJson() {
+        const datePart = new Date().toISOString().slice(0, 10);
+        const jsonContent = this.exportJson();
+        this.downloadContent(`elibrary-bibtex-${datePart}.json`, jsonContent, 'application/json;charset=utf-8');
+    }
+
+    static downloadBibtex() {
+        const datePart = new Date().toISOString().slice(0, 10);
+        const bibtexContent = this.exportBibtex();
+        this.downloadContent(`elibrary-bibtex-${datePart}.bib`, bibtexContent, 'text/x-bibtex;charset=utf-8');
     }
 }
 
@@ -278,10 +296,18 @@ function ensureToolbar() {
         CollectedBibtexStore.downloadJson();
     });
 
+    const exportBibtexButton = document.createElement('button');
+    exportBibtexButton.innerText = 'Экспорт BibTeX';
+    exportBibtexButton.style.marginRight = '10px';
+    exportBibtexButton.addEventListener('click', () => {
+        CollectedBibtexStore.downloadBibtex();
+    });
+
     const counter = document.createElement('span');
     counter.innerText = `Записей в локальной базе: ${CollectedBibtexStore.getCount()}`;
 
     toolbar.appendChild(exportButton);
+    toolbar.appendChild(exportBibtexButton);
     toolbar.appendChild(counter);
 
     if (document.body.firstChild) {
