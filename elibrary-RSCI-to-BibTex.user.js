@@ -378,6 +378,63 @@ function normalizeLabelText(value) {
         .trim();
 }
 
+function isLikelyPersonName(value) {
+    const text = String(value || '').replace(/\u00A0/g, ' ').trim();
+    return /^[А-ЯЁA-Z][А-ЯЁA-Z-]+\s+[А-ЯЁA-Z]\.[А-ЯЁA-Z]\.$/.test(text);
+}
+
+function extractAuthorsFallback(doc) {
+    const candidates = [...doc.querySelectorAll('font[color="#00008f"], span.help.pointer font, b font[color="#00008f"]')]
+        .map((node) => String(node.innerText || '').replace(/\s+/g, ' ').trim())
+        .filter((value) => isLikelyPersonName(value));
+
+    const unique = [];
+    const seen = new Set();
+    for (const candidate of candidates) {
+        if (!seen.has(candidate)) {
+            seen.add(candidate);
+            unique.push(candidate);
+        }
+    }
+    return unique;
+}
+
+function extractSourceFallback(doc) {
+    const sourceLabel = [...doc.querySelectorAll('font')]
+        .find((node) => normalizeLabelText(node.innerText).includes('ИСТОЧНИК'));
+    if (!sourceLabel) {
+        return { journal: '', publisher: '' };
+    }
+
+    const sourceTable = sourceLabel.closest('table');
+    if (!sourceTable) {
+        return { journal: '', publisher: '' };
+    }
+
+    const nextTd = sourceTable.querySelector('tr:nth-child(2) td:nth-child(2)');
+    const sourceAnchor = nextTd?.querySelector('a');
+    const journal = sourceAnchor?.innerText?.trim() || '';
+
+    let publisher = '';
+    const text = nextTd?.innerText || '';
+    const publisherMatch = text.match(/Издательство:\s*([^\n]+)/i);
+    if (publisherMatch) {
+        publisher = publisherMatch[1].trim();
+    }
+
+    return { journal, publisher };
+}
+
+function extractUrlsFallback(doc) {
+    const anchors = [...doc.querySelectorAll('a[href]')];
+    const articleUrl = anchors.find((a) => /\/item\.asp\?id=\d+/i.test(a.getAttribute('href') || ''))?.href || '';
+    const ednUrl = anchors.find((a) => /^\/[a-z0-9]{6}$/i.test(a.getAttribute('href') || ''))?.href || '';
+    return {
+        idUrl: articleUrl,
+        ednUrl,
+    };
+}
+
 class ElibraryPublicationMetadata {
     constructor(url, doi, title, authors, affiliations, type, language, volume, number, year, pages, journal, abstract, publisher, holder, reqnumber, publdate, regdate, prnumber) {
         this._url = url || '';
@@ -545,6 +602,36 @@ class ElibraryPublicationMetadata {
             }
 
             metadata._abstract = extractAbstractFromTables(tables, di, document);
+
+            // Fallback for pages where table indexing shifts significantly.
+            if (!metadata._title) {
+                metadata._title = document.querySelector('.bigtext')?.innerText?.trim() || '';
+            }
+
+            if (!Array.isArray(metadata._authors) || metadata._authors.length === 0 || !isLikelyPersonName(metadata._authors[0])) {
+                const fallbackAuthors = extractAuthorsFallback(document);
+                if (fallbackAuthors.length > 0) {
+                    metadata._authors = fallbackAuthors;
+                }
+            }
+
+            const fallbackUrls = extractUrlsFallback(document);
+            if (!metadata._url) {
+                metadata._url = fallbackUrls.ednUrl || fallbackUrls.idUrl || '';
+            } else if (!/\/[a-z0-9]{6}$/i.test(new URL(metadata._url, ELIBRARY_DOMAIN).pathname) && fallbackUrls.ednUrl) {
+                // Prefer short EDN url when available.
+                metadata._url = fallbackUrls.ednUrl;
+            }
+
+            if (!metadata._journal || !metadata._publisher) {
+                const source = extractSourceFallback(document);
+                if (!metadata._journal && source.journal) {
+                    metadata._journal = source.journal;
+                }
+                if (!metadata._publisher && source.publisher) {
+                    metadata._publisher = source.publisher;
+                }
+            }
 
             return metadata;
         } catch (e) {
