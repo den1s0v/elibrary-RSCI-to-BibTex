@@ -383,8 +383,29 @@ function isLikelyPersonName(value) {
     return /^[А-ЯЁA-Z][А-ЯЁA-Z-]+\s+[А-ЯЁA-Z]\.[А-ЯЁA-Z]\.$/.test(text);
 }
 
-function extractAuthorsFallback(doc) {
-    const candidates = [...doc.querySelectorAll('font[color="#00008f"], span.help.pointer font, b font[color="#00008f"]')]
+function hasCyrillic(value) {
+    return /[А-Яа-яЁё]/.test(String(value || ''));
+}
+
+function hasLatin(value) {
+    return /[A-Za-z]/.test(String(value || ''));
+}
+
+function extractAuthorsFallback(doc, preferredLanguage = '') {
+    const englishSectionLabel = [...doc.querySelectorAll('font')]
+        .find((node) => normalizeLabelText(node.innerText).includes('ОПИСАНИЕ НА АНГЛИЙСКОМ ЯЗЫКЕ'));
+    const englishSectionTable = englishSectionLabel?.closest('table');
+
+    const authorNodes = [...doc.querySelectorAll('font[color="#00008f"], span.help.pointer font, b font[color="#00008f"]')]
+        .filter((node) => {
+            if (!englishSectionTable) {
+                return true;
+            }
+            // Keep only nodes that appear before the English section block.
+            return !!(node.compareDocumentPosition(englishSectionTable) & Node.DOCUMENT_POSITION_FOLLOWING);
+        });
+
+    const candidates = authorNodes
         .map((node) => String(node.innerText || '').replace(/\s+/g, ' ').trim())
         .filter((value) => isLikelyPersonName(value));
 
@@ -396,12 +417,25 @@ function extractAuthorsFallback(doc) {
             unique.push(candidate);
         }
     }
+    if (preferredLanguage === 'russian') {
+        const ruOnly = unique.filter((value) => hasCyrillic(value) && !hasLatin(value));
+        return ruOnly.length > 0 ? ruOnly : unique;
+    }
+
+    if (preferredLanguage === 'english') {
+        const enOnly = unique.filter((value) => hasLatin(value) && !hasCyrillic(value));
+        return enOnly.length > 0 ? enOnly : unique;
+    }
+
     return unique;
 }
 
 function extractSourceFallback(doc) {
     const sourceLabel = [...doc.querySelectorAll('font')]
-        .find((node) => normalizeLabelText(node.innerText).includes('ИСТОЧНИК'));
+        .find((node) => {
+            const label = normalizeLabelText(node.innerText);
+            return label.includes('ИСТОЧНИК') || label.includes('ЖУРНАЛ');
+        });
     if (!sourceLabel) {
         return { journal: '', publisher: '' };
     }
@@ -609,7 +643,7 @@ class ElibraryPublicationMetadata {
             }
 
             if (!Array.isArray(metadata._authors) || metadata._authors.length === 0 || !isLikelyPersonName(metadata._authors[0])) {
-                const fallbackAuthors = extractAuthorsFallback(document);
+                const fallbackAuthors = extractAuthorsFallback(document, metadata._language);
                 if (fallbackAuthors.length > 0) {
                     metadata._authors = fallbackAuthors;
                 }
