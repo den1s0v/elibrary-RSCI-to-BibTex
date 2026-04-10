@@ -13,8 +13,8 @@
 // Конфигурация пользователем //
 
 // Добавить общий префикс к идентификатору всех публикаций
-// const ENTRY_ID_PREFIX = '';
-const ENTRY_ID_PREFIX = 'own_';
+const ENTRY_ID_PREFIX = '';
+// const ENTRY_ID_PREFIX = 'own_';
 
 // Сохранять abstract (аннотацию статьи) в локальную коллекцию (если найден на странице статьи)
 const STORE_ABSTRACT = true;
