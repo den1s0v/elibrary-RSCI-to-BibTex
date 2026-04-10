@@ -1,12 +1,10 @@
 // ==UserScript==
 // @name         elibrary-RSCI-to-BibTex
 // @namespace    http://tampermonkey.net/
-// @version      0.4
+// @version      0.5
 // @description  Elibrary (Russian Science Citation Index) to BibTex article citation
 // @author       You
-// @match        https://*elibrary.ru/item.asp?id=*
-// @match        https://*elibrary.ru/author_items.asp
-// @match        https://*elibrary.ru/author_items.asp?authorid=*
+// @match        https://*elibrary.ru/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=tampermonkey.net
 // @grant        none
 // ==/UserScript==
@@ -17,6 +15,9 @@
 // Добавить общий префикс к идентификатору всех публикаций
 // const ENTRY_ID_PREFIX = '';
 const ENTRY_ID_PREFIX = 'own_';
+
+// Сохранять abstract (аннотацию статьи) в локальную коллекцию (если найден на странице статьи)
+const STORE_ABSTRACT = true;
 
 
 
@@ -46,153 +47,245 @@ function min_string(a, b) {
     return a < b ? a : b;
 }
 
-function getElementByText(text) {
-  const xpath = `//node()[normalize-space(text())='${text.trim()}']`;
-  return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-}
+const BIBTEX_COLLECTION_STORAGE_KEY = 'elibrary_bibtex_collection_v1';
+const LINK_MARKER_STYLE_ID = 'elibrary-bibtex-link-markers';
+const PAGE_TOOLBAR_ID = 'elibrary-bibtex-toolbar';
 
-const DAY_MILLISECONDS = 24 * 60 * 60 * 1000; /* 24 часа */
-
-class CacheManager {
-    static getCacheKey(url) {
-        return `tmpbib_${url}`;
-    }
-
-    static getCache(url, _force_drop = false) {
-        // (Debugging: switch _force_drop = 1 to clear and force recalc cached entries on next page load.)
-        const cacheKey = this.getCacheKey(url);
-        const cachedData = localStorage.getItem(cacheKey);
-        if (cachedData) {
-            const { data, expires_at } = JSON.parse(cachedData);
-            const now = Date.now();  // Timestamp in milliseconds.
-            if (now < expires_at && !_force_drop) {
-                return data; // Данные актуальны
-            } else {
-                localStorage.removeItem(cacheKey); // Данные уже неактуальны.
-            }
-        }
-        return null; // Данные устарели или отсутствуют
-    }
-
-    static setCache(url, data, expires_after_ms = DAY_MILLISECONDS) {
-        const cacheKey = this.getCacheKey(url);
-        const cacheData = {
-            data,
-            expires_at: Date.now() + expires_after_ms,
+class CollectedBibtexStore {
+    static emptyStorageShape() {
+        return {
+            version: 1,
+            recordsByKey: {},
+            indexByPublicationId: {},
+            indexByEdn: {},
         };
-        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-    }
-}
-
-
-class ProgressIndicator {
-    constructor() {
-        // Создаём контейнер для индикатора
-        this.container = document.createElement('div');
-        this.container.style.position = 'fixed';
-        this.container.style.top = '0';
-        this.container.style.left = '0';
-        this.container.style.width = '100%';
-        this.container.style.backgroundColor = '#f0f0f0';
-        this.container.style.padding = '4px';
-        this.container.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.2)';
-        this.container.style.zIndex = '1000';
-        this.container.style.display = 'none'; // По умолчанию скрыт
-
-        // Элемент для текста
-        this.textElement = document.createElement('span');
-        this.textElement.style.marginRight = '10px';
-
-        // Элемент для прогресс-бара
-        this.progressBar = document.createElement('div');
-        this.progressBar.style.height = '5px';
-        this.progressBar.style.backgroundColor = '#007bff';
-        this.progressBar.style.width = '0%';
-        this.progressBar.style.transition = 'width 0.3s ease';
-
-        // Добавляем элементы в контейнер
-        this.container.appendChild(this.progressBar);
-        this.container.appendChild(this.textElement);
-
-        // Вставляем контейнер в тело документа
-        document.body.appendChild(this.container);
     }
 
-    // Показать индикатор
-    show(what=null) {
-        this.container.style.display = 'block';
-        if (what === 'text')
-            this.textElement.style.display = 'block';
-        if (what === 'bar')
-            this.progressBar.style.display = 'block';
-    }
-
-    // Скрыть индикатор
-    hide(what=null) {
-        if (what === null)
-            // Hide completely
-            this.container.style.display = 'none';
-
-        if (what === 'text')
-            this.textElement.style.display = 'none';
-        if (what === 'bar')
-            this.progressBar.style.display = 'none';
-    }
-
-    // Установить текст
-    setText(text) {
-        this.show('text');
-        this.textElement.innerText = text;
-    }
-
-    // Показать уведомление с автоматическим скрытием
-    showNotification(message, duration = 3, full_hide_on_done=false) {
-        this.textElement.innerText = message;
-        this.show('text');
-        setTimeout(() => {
-            this.textElement.innerText = '';
-            this.hide(full_hide_on_done ? null : 'text');
-        }, duration * 1000);
-    }
-
-    // Установить прогресс (с известным максимумом)
-    setProgress(current, max) {
-        this.show('bar');
-        const percent = (current / max) * 100;
-        this.progressBar.style.width = `${percent}%`;
-        this.progressBar.style.animation = 'none';
-    }
-
-    // Установить прогресс (без известного максимума)
-    setIndeterminateProgress() {
-        this.show('bar');
-        this.progressBar.style.width = '50%'; // Анимация для неизвестного прогресса
-        this.progressBar.style.backgroundColor = '#007bff';
-        this.progressBar.style.animation = 'progressIndeterminate 2s infinite';
-    }
-
-    // Очистить прогресс
-    clearProgress() {
-        this.hide('bar');
-        this.progressBar.style.width = '0%';
-        this.progressBar.style.backgroundColor = '#007bff';
-        this.progressBar.style.animation = 'none';
-    }
-
-    static init_once() {
-        // Добавляем CSS для анимации прогресса (неопределённый прогресс)
-        const style = document.createElement('style');
-        style.innerHTML = `
-        @keyframes progressIndeterminate {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(200%); }
+    static loadRaw() {
+        const rawValue = localStorage.getItem(BIBTEX_COLLECTION_STORAGE_KEY);
+        if (!rawValue) {
+            return this.emptyStorageShape();
         }
-        `;
-        document.head.appendChild(style);
+
+        try {
+            const parsed = JSON.parse(rawValue);
+            return {
+                version: 1,
+                recordsByKey: parsed.recordsByKey || {},
+                indexByPublicationId: parsed.indexByPublicationId || {},
+                indexByEdn: parsed.indexByEdn || {},
+            };
+        } catch (error) {
+            console.error('Failed to parse BibTeX collection from localStorage:', error);
+            return this.emptyStorageShape();
+        }
+    }
+
+    static saveRaw(raw) {
+        localStorage.setItem(BIBTEX_COLLECTION_STORAGE_KEY, JSON.stringify(raw));
+    }
+
+    static normalizeEdn(edn) {
+        return (edn || '').trim().toLowerCase();
+    }
+
+    static makeRecordKey(publicationId, edn, sourceUrl) {
+        if (publicationId) {
+            return `id:${publicationId}`;
+        }
+        if (edn) {
+            return `edn:${this.normalizeEdn(edn)}`;
+        }
+        return `url:${sourceUrl || ''}`;
+    }
+
+    static upsert(record) {
+        const raw = this.loadRaw();
+        const publicationId = (record.publicationId || '').trim();
+        const edn = this.normalizeEdn(record.edn || '');
+        const sourceUrl = record.sourceUrl || '';
+
+        const candidateKeys = [
+            publicationId ? raw.indexByPublicationId[publicationId] : null,
+            edn ? raw.indexByEdn[edn] : null,
+        ].filter(Boolean);
+        const existingKey = candidateKeys.find((key) => !!raw.recordsByKey[key]);
+        const recordKey = existingKey || this.makeRecordKey(publicationId, edn, sourceUrl);
+        const oldRecord = raw.recordsByKey[recordKey] || {};
+
+        const nextRecord = {
+            ...oldRecord,
+            ...record,
+            publicationId,
+            edn,
+            sourceUrl,
+            updatedAt: new Date().toISOString(),
+        };
+
+        raw.recordsByKey[recordKey] = nextRecord;
+        if (publicationId) {
+            raw.indexByPublicationId[publicationId] = recordKey;
+        }
+        if (edn) {
+            raw.indexByEdn[edn] = recordKey;
+        }
+
+        this.saveRaw(raw);
+        return nextRecord;
+    }
+
+    static has(target) {
+        const raw = this.loadRaw();
+        if (target.publicationId && raw.indexByPublicationId[target.publicationId]) {
+            return true;
+        }
+        const normalizedEdn = this.normalizeEdn(target.edn || '');
+        if (normalizedEdn && raw.indexByEdn[normalizedEdn]) {
+            return true;
+        }
+        return false;
+    }
+
+    static getAllRecords() {
+        const raw = this.loadRaw();
+        return Object.values(raw.recordsByKey).sort((a, b) => {
+            return String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+        });
+    }
+
+    static getCount() {
+        return this.getAllRecords().length;
+    }
+
+    static exportJson() {
+        const records = this.getAllRecords();
+        return JSON.stringify({
+            exportedAt: new Date().toISOString(),
+            count: records.length,
+            records,
+        }, null, 2);
+    }
+
+    static downloadJson() {
+        const jsonContent = this.exportJson();
+        const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8' });
+        const blobUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        const datePart = new Date().toISOString().slice(0, 10);
+        anchor.href = blobUrl;
+        anchor.download = `elibrary-bibtex-${datePart}.json`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(blobUrl);
     }
 }
 
+function parseArticleLinkTarget(urlLike) {
+    let parsedUrl;
+    try {
+        parsedUrl = new URL(urlLike, window.location.origin);
+    } catch (_) {
+        return null;
+    }
 
+    if (!parsedUrl.host.includes('elibrary.ru')) {
+        return null;
+    }
+
+    if (parsedUrl.pathname === '/item.asp') {
+        const publicationId = (parsedUrl.searchParams.get('id') || '').trim();
+        const edn = (parsedUrl.searchParams.get('edn') || '').trim().toLowerCase();
+        if (!publicationId && !edn) {
+            return null;
+        }
+        return {
+            publicationId,
+            edn,
+            sourceUrl: parsedUrl.href,
+        };
+    }
+
+    const shortPathMatch = parsedUrl.pathname.match(/^\/([a-z0-9]{6})$/i);
+    if (shortPathMatch && !parsedUrl.search) {
+        return {
+            publicationId: '',
+            edn: shortPathMatch[1].toLowerCase(),
+            sourceUrl: parsedUrl.href,
+        };
+    }
+
+    return null;
+}
+
+function ensureLinkMarkerStyles() {
+    if (document.getElementById(LINK_MARKER_STYLE_ID)) {
+        return;
+    }
+
+    const style = document.createElement('style');
+    style.id = LINK_MARKER_STYLE_ID;
+    style.innerHTML = `
+        a.bibtex-processed::after {
+            content: ' ✓';
+            color: #218838;
+            font-weight: bold;
+        }
+        a.bibtex-unprocessed {
+            opacity: 0.9;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function markKnownArticleLinks() {
+    ensureLinkMarkerStyles();
+
+    const links = document.querySelectorAll('a[href]');
+    for (const link of links) {
+        const target = parseArticleLinkTarget(link.href);
+        if (!target) {
+            continue;
+        }
+
+        const saved = CollectedBibtexStore.has(target);
+        link.classList.remove('bibtex-processed', 'bibtex-unprocessed');
+        link.classList.add(saved ? 'bibtex-processed' : 'bibtex-unprocessed');
+    }
+}
+
+function ensureToolbar() {
+    if (document.getElementById(PAGE_TOOLBAR_ID)) {
+        return;
+    }
+
+    const toolbar = document.createElement('div');
+    toolbar.id = PAGE_TOOLBAR_ID;
+    toolbar.style.margin = '12px 0';
+    toolbar.style.padding = '8px 10px';
+    toolbar.style.border = '1px solid #ddd';
+    toolbar.style.backgroundColor = '#fafafa';
+    toolbar.style.fontSize = '12px';
+
+    const exportButton = document.createElement('button');
+    exportButton.innerText = 'Экспорт JSON';
+    exportButton.style.marginRight = '10px';
+    exportButton.addEventListener('click', () => {
+        CollectedBibtexStore.downloadJson();
+    });
+
+    const counter = document.createElement('span');
+    counter.innerText = `Записей в локальной базе: ${CollectedBibtexStore.getCount()}`;
+
+    toolbar.appendChild(exportButton);
+    toolbar.appendChild(counter);
+
+    if (document.body.firstChild) {
+        document.body.insertBefore(toolbar, document.body.firstChild);
+    } else {
+        document.body.appendChild(toolbar);
+    }
+}
 
 function divide_authors_info(authors_raw_list) {
     function isNumeric(num) {
@@ -235,6 +328,42 @@ function divide_authors_info(authors_raw_list) {
     }
 
     return [authors, affiliations];
+}
+
+function extractAbstractFromTables(tables, baseIndexShift, doc) {
+    const abstractIndexes = [baseIndexShift + 29, baseIndexShift + 30];
+    for (const index of abstractIndexes) {
+        const table = tables[index];
+        if (!table) {
+            continue;
+        }
+        const tdList = table.querySelectorAll('td');
+        if (tdList.length < 3) {
+            continue;
+        }
+        const caption = (tdList[0].innerText || '').trim().toUpperCase();
+        if (!caption.includes('АННОТАЦИЯ')) {
+            continue;
+        }
+        const abstractText = (tdList[2].innerText || '').trim();
+        if (abstractText) {
+            return abstractText;
+        }
+    }
+
+    const fallbackCell = Array.from(doc.querySelectorAll('td')).find((cell) => {
+        const value = (cell.innerText || '').trim().toUpperCase();
+        return value === 'АННОТАЦИЯ:';
+    });
+    if (!fallbackCell || !fallbackCell.parentElement) {
+        return '';
+    }
+
+    const cells = fallbackCell.parentElement.querySelectorAll('td');
+    if (cells.length < 3) {
+        return '';
+    }
+    return (cells[2].innerText || '').trim();
 }
 
 class ElibraryPublicationMetadata {
@@ -384,16 +513,7 @@ class ElibraryPublicationMetadata {
                 }
             }
 
-            // let tbl = tables[di + 29];
-            // if (tbl.querySelectorAll('td')[0].innerText === 'АННОТАЦИЯ:') {
-            //     metadata._abstract = tbl.querySelectorAll('td')[2].innerText;
-            // }
-
-            // // try next one
-            // tbl = tables[di + 30];
-            // if (tbl.querySelectorAll('td')[0].innerText === 'АННОТАЦИЯ:') {
-            //     metadata._abstract = tbl.querySelectorAll('td')[2].innerText;
-            // }
+            metadata._abstract = extractAbstractFromTables(tables, di, document);
 
             return metadata;
         } catch (e) {
@@ -715,94 +835,34 @@ function handlePublicationPage() {
     'use strict';
     try {
         const metadata = ElibraryPublicationMetadata.parse(document);
+        if (!metadata) {
+            return false;
+        }
         let bibtexEntry = metadata.get_bibtex_entry();
 
         // Вставляем BibTeX на страницу с интерактивными элементами
         insert_to_page(bibtexEntry);
+        if (bibtexEntry) {
+            const fromLocation = parseArticleLinkTarget(window.location.href) || {};
+            const fromMetadataUrl = parseArticleLinkTarget(metadata._url || '') || {};
+            const publicationId = fromLocation.publicationId || fromMetadataUrl.publicationId || '';
+            const edn = fromLocation.edn || fromMetadataUrl.edn || '';
+            CollectedBibtexStore.upsert({
+                publicationId,
+                edn,
+                sourceUrl: metadata._url || window.location.href,
+                bibtex: bibtexEntry,
+                title: metadata._title || '',
+                year: metadata._year || '',
+                abstract: STORE_ABSTRACT ? (metadata._abstract || '') : '',
+            });
+        }
+        return true;
     } catch (e) {
         // alert("Скрипт [elibrary-RSCI-to-BibTex] из расширения Tampermonkey.\nВозникла ошибка при извлечении библиографической информации! \nПодробности см. в консоли разработчика (F12) ↓");
         console.log('handlePublicationPage run into errors...');
         console.error(e);
-    }
-}
-
-async function fetchPublicationBibtex(publicationId) {
-    const url = `${ELIBRARY_DOMAIN}/item.asp?id=${publicationId}`;
-    const cacheKey = `pub-${publicationId}`;
-    const cachedBibtexEntry = CacheManager.getCache(cacheKey);
-    if (cachedBibtexEntry) {
-        console.log('Used cached data for publication:', publicationId);
-        return cachedBibtexEntry;
-    }
-
-    console.log('fetchPublicationBibtex for:', url);
-
-    const response = await fetch(url);
-    const text = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(text, 'text/html');
-
-    const metadata = ElibraryPublicationMetadata.parse(doc);
-    let bibtexEntry = metadata.get_bibtex_entry();
-    CacheManager.setCache(cacheKey, bibtexEntry);
-
-    return bibtexEntry;
-}
-
-async function handleAuthorPage(renumerate_list=false) {
-    ProgressIndicator.init_once();
-    const progress = new ProgressIndicator();
-    // progress.show();
-    progress.showNotification("Обработка списка...", 5);
-    progress.setIndeterminateProgress();
-
-    const authorId = new URL(window.location.href).searchParams.get('authorid');
-    const publicationLinks = document.querySelectorAll('a[href*="item.asp?id="]');
-    const publicationIds = Array.from(publicationLinks).map(link => {
-        const url = new URL(link.href);
-        return url.searchParams.get('id');
-    });
-
-    const bibtexEntries = [];
-    let failed = 0;
-    for (const publicationLink of publicationLinks) {
-        try {
-            const url = new URL(publicationLink.href);
-            const publicationId = url.searchParams.get('id');
-
-            const bibtexEntry = await fetchPublicationBibtex(publicationId);
-            if (!bibtexEntry) {
-                console.warn(`No info for publication with ID=${publicationId}`);
-                failed += 1;
-                continue;
-            }
-
-            let pub_index;
-            if (renumerate_list) {
-                pub_index = bibtexEntries.length + 1;
-            } else {
-                const list_row = publicationLink.parentElement.parentElement.parentElement;
-                const index_in_list_str = (list_row.children[0].querySelector('font') || row.querySelector('font')).innerText;
-                pub_index = +index_in_list_str.match(/\d+/);
-            }
-
-            bibtexEntries.push(`% Публикация ${pub_index}.\n${bibtexEntry}`);
-
-            progress.setProgress(bibtexEntries.length, publicationIds.length);
-        } catch (e) {
-            console.log('While collecting publications, exception occured...');
-            console.error(e);
-            failed += 1;
-        }
-    }
-
-    const result_count = bibtexEntries.length;
-    progress.clearProgress();
-    progress.setText(`Получено записей bibtex: ${result_count}, c ошибками: ${failed}, всего ссылкок: ${publicationIds.length}`/*, 20, true*/);
-
-    if (result_count > 0) {
-        const combinedBibtex = bibtexEntries.join('\n\n');
-        insert_to_page(combinedBibtex, true);
+        return false;
     }
 }
 
@@ -820,24 +880,16 @@ async function handleAuthorPage(renumerate_list=false) {
     // 'https://elibrary.ru' or 'https://www.elibrary.ru'
     ELIBRARY_DOMAIN = window.location.origin;
 
-    // Проверяем тип страницы
     const currentUrl = window.location.href;
-    const currentPath = window.location.pathname + window.location.search;
 
     try {
-        if (currentPath.match(/\/item\.asp\?id=\d+/)) {
-            // Страница отдельной публикации
+        const isPublicationPage = !!parseArticleLinkTarget(currentUrl);
+        if (isPublicationPage) {
             handlePublicationPage();
-        // } else if (currentPath.match(/\/author_items\.asp\?authorid=\d+/)) {
-        //     // Страница автора
-        //     await handleAuthorPage();
-        // } else if (currentPath.match(/\/author_items\.asp/)) {
-        //     // Страница результатов поиска
-        //     await handleAuthorPage();
-        //     // handleSearchResultsPage();
-        } else {
-            console.log('Тип страницы не поддерживается:', currentUrl);
         }
+
+        ensureToolbar();
+        markKnownArticleLinks();
     } catch (e) {
         alert("Скрипт [elibrary-RSCI-to-BibTex] из расширения Tampermonkey.\nВозникла ошибка при извлечении библиографической информации! \nПодробности см. в консоли разработчика (F12) ↓");
         console.error(e);
