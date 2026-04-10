@@ -335,6 +335,15 @@ function divide_authors_info(authors_raw_list) {
 }
 
 function extractAbstractFromTables(tables, baseIndexShift, doc) {
+    // Fast path for common eLIBRARY structure:
+    // <div id="abstract1"> ... </div>, <div id="abstract2"> ... </div>, ...
+    const directAbstractDiv = [...doc.querySelectorAll('div[id]')]
+        .find((node) => /^abstract\d*$/i.test(node.id || ''));
+    const directAbstractText = (directAbstractDiv?.innerText || '').trim();
+    if (directAbstractText) {
+        return directAbstractText;
+    }
+
     const abstractIndexes = [baseIndexShift + 29, baseIndexShift + 30];
     for (const index of abstractIndexes) {
         const table = tables[index];
@@ -359,15 +368,32 @@ function extractAbstractFromTables(tables, baseIndexShift, doc) {
         const value = (cell.innerText || '').trim().toUpperCase();
         return value === 'АННОТАЦИЯ:';
     });
-    if (!fallbackCell || !fallbackCell.parentElement) {
+    if (!fallbackCell) {
         return '';
     }
 
-    const cells = fallbackCell.parentElement.querySelectorAll('td');
-    if (cells.length < 3) {
-        return '';
+    // 1) Same-row extraction (older layout)
+    if (fallbackCell.parentElement) {
+        const cells = fallbackCell.parentElement.querySelectorAll('td');
+        if (cells.length >= 3) {
+            const sameRowText = (cells[2].innerText || '').trim();
+            if (sameRowText) {
+                return sameRowText;
+            }
+        }
     }
-    return (cells[2].innerText || '').trim();
+
+    // 2) Next-row extraction inside the same section table (current layout)
+    const abstractSectionTable = fallbackCell.closest('table');
+    if (abstractSectionTable) {
+        const valueCell = abstractSectionTable.querySelector('tr:nth-child(2) td:last-child');
+        const sectionText = (valueCell?.innerText || '').trim();
+        if (sectionText) {
+            return sectionText;
+        }
+    }
+
+    return '';
 }
 
 function normalizeLabelText(value) {
