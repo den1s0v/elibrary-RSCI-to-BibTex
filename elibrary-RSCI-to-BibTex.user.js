@@ -226,13 +226,17 @@ function ensureLinkMarkerStyles() {
     const style = document.createElement('style');
     style.id = LINK_MARKER_STYLE_ID;
     style.innerHTML = `
+        a.bibtex-processed {
+            color: #1a7f37 !important;
+        }
         a.bibtex-processed::after {
             content: ' ✓';
             color: #218838;
             font-weight: bold;
         }
         a.bibtex-unprocessed {
-            opacity: 0.9;
+            color: #b54708 !important;
+            opacity: 0.95;
         }
     `;
     document.head.appendChild(style);
@@ -366,6 +370,14 @@ function extractAbstractFromTables(tables, baseIndexShift, doc) {
     return (cells[2].innerText || '').trim();
 }
 
+function normalizeLabelText(value) {
+    return String(value || '')
+        .replace(/\u00A0/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/:$/, '')
+        .trim();
+}
+
 class ElibraryPublicationMetadata {
     constructor(url, doi, title, authors, affiliations, type, language, volume, number, year, pages, journal, abstract, publisher, holder, reqnumber, publdate, regdate, prnumber) {
         this._url = url || '';
@@ -415,11 +427,17 @@ class ElibraryPublicationMetadata {
     */
     static recognize_urls_table(table_element, metadata) {
         // eLIBRARY ID: … , EDN: … , (optional) DOI: …
+        if (!table_element) {
+            return;
+        }
         let value_tags = table_element.querySelectorAll('font');
 
         value_tags.forEach((tag) => {
-            let kind = tag.previousSibling.data.trim();
-            let href = tag.children[0].href;
+            let kind = tag.previousSibling?.data?.trim();
+            let href = tag.children[0]?.href;
+            if (!kind || !href) {
+                return;
+            }
             if (kind.includes('ID')) {
                 // Keep plain old URL is EDN is not provided
                 metadata._url = href;
@@ -437,15 +455,19 @@ class ElibraryPublicationMetadata {
     /**
     * @param[in|out] metadata object
     */
-    static recognize_biblio_metadata_table(table_element, metadata) {
-        let value_tags = [...table_element.querySelectorAll('a, font')];
+    static recognize_biblio_metadata_table(root_element, metadata) {
+        if (!root_element) {
+            return;
+        }
+        let value_tags = [...root_element.querySelectorAll('a, font')];
 
         value_tags.map(n => [n.previousSibling?.data?.trim(), n.innerText]).forEach(([kind, value]) => {
             if (!kind) {
                 return;  // Skip inappropriate element.
             }
 
-            kind = kind.replace(' ', ' ');  // &nbsp; → space
+            kind = normalizeLabelText(kind);  // &nbsp; → space, trim, remove trailing ':'
+            value = String(value || '').trim();
 
             if (kind.includes('Тип')) {
                 metadata._type = value;
@@ -474,8 +496,11 @@ class ElibraryPublicationMetadata {
                 metadata._year = value;
             } else if (kind.includes('Страницы')) {
                 metadata._pages = value;
+            } else if (kind.includes('eLIBRARY ID') || kind.includes('EDN') || kind.includes('DOI')) {
+                // URL markers, not bibliographic fields.
+                return;
             } else {
-                console.log('Not recognized biblio: ', kind, value);
+                // Silently ignore unsupported fields to avoid noisy console logs.
             }
         });
     }
@@ -490,25 +515,31 @@ class ElibraryPublicationMetadata {
             const urls_table = tables[di + 24];
             ElibraryPublicationMetadata.recognize_urls_table(urls_table, metadata);
 
-            metadata._title = tables[di + 25].querySelector('.bigtext').innerText;
+            metadata._title = tables[di + 25]?.querySelector('.bigtext')?.innerText || '';
 
             let authors_raw_list = [];
-            for (let author of tables[di + 26].querySelectorAll('font')) {
+            for (let author of (tables[di + 26]?.querySelectorAll('font') || [])) {
                 authors_raw_list.push(author.innerText);
             }
-            [metadata._authors, metadata._affiliations] = divide_authors_info(authors_raw_list);
+            if (authors_raw_list.length > 0) {
+                [metadata._authors, metadata._affiliations] = divide_authors_info(authors_raw_list);
+            }
 
             const bibl_meta_table = tables[di + 27];
             ElibraryPublicationMetadata.recognize_biblio_metadata_table(bibl_meta_table, metadata);
+            // Fallback for pages where table offsets differ (e.g., review articles).
+            if (!metadata._type || !metadata._year || !metadata._pages) {
+                ElibraryPublicationMetadata.recognize_biblio_metadata_table(document, metadata);
+            }
 
             const journal_table = tables[di + 28];
-            const table_caption = journal_table.querySelector('td font').innerText;
+            const table_caption = journal_table?.querySelector('td font')?.innerText || '';
             if (table_caption.includes('ЖУРНАЛ') || table_caption.includes('ИСТОЧНИК')) {
 
-                metadata._journal = journal_table.querySelector('a').innerText;
+                metadata._journal = journal_table.querySelector('a')?.innerText || '';
 
-                let publisher = journal_table.querySelectorAll('tr')[1].querySelector('td font');
-                if (publisher && publisher.previousSibling.data.trim().includes('Издательство')) {
+                let publisher = journal_table.querySelectorAll('tr')[1]?.querySelector('td font');
+                if (publisher && publisher.previousSibling?.data?.trim()?.includes('Издательство')) {
                     metadata._publisher = publisher.innerText;
                 }
             }
