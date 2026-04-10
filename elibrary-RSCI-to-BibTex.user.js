@@ -19,6 +19,9 @@ const ENTRY_ID_PREFIX = '';
 // Сохранять abstract (аннотацию статьи) в локальную коллекцию (если найден на странице статьи)
 const STORE_ABSTRACT = true;
 
+// Нормализовывать регистр авторов/заголовков/журналов (оставляя аббревиатуры)
+const NORMALIZE_CASE_FIELDS = true;
+
 
 
 
@@ -430,6 +433,85 @@ function normalizeLabelText(value) {
         .trim();
 }
 
+function toCapitalizedWord(word) {
+    if (!word) {
+        return word;
+    }
+    const lower = word.toLocaleLowerCase('ru-RU');
+    return lower[0].toLocaleUpperCase('ru-RU') + lower.slice(1);
+}
+
+function isServiceWordUpper(word) {
+    return [
+        'И', 'ИЛИ', 'А', 'НО',
+        'В', 'ВО', 'НА', 'НАД', 'ПОД', 'ПРИ',
+        'ПО', 'К', 'КО', 'У', 'С', 'СО',
+        'О', 'ОБ', 'ОБО', 'ДЛЯ', 'ОТ', 'ДО', 'ИЗ',
+    ].includes(word);
+}
+
+function isProtectedAbbreviation(word) {
+    if (!word || word !== word.toUpperCase()) {
+        return false;
+    }
+    // Keep uppercase latin abbreviations (HTML, CSS, SQL, IT, AI, ...).
+    if (/^[A-Z0-9]{2,8}$/.test(word)) {
+        return true;
+    }
+    // Keep dotted initials/abbreviations.
+    if (/^[A-ZА-ЯЁ](\.[A-ZА-ЯЁ])+\.?$/.test(word)) {
+        return true;
+    }
+    // Keep cyrillic abbreviations except common service words.
+    if (/^[А-ЯЁ]{2,5}$/.test(word) && !isServiceWordUpper(word)) {
+        return true;
+    }
+    return false;
+}
+
+function normalizeCasePreservingAbbreviations(text, sentenceCase = false) {
+    if (!NORMALIZE_CASE_FIELDS) {
+        return text || '';
+    }
+    let firstLexemeDone = false;
+    return String(text || '').replace(/[A-Za-zА-ЯЁ]+(?:-[A-Za-zА-ЯЁ]+)*/g, (word) => {
+        const isUpper = word === word.toUpperCase();
+        if (!isUpper || isProtectedAbbreviation(word)) {
+            return word;
+        }
+
+        if (sentenceCase) {
+            if (!firstLexemeDone) {
+                firstLexemeDone = true;
+                return toCapitalizedWord(word);
+            }
+            return word.toLocaleLowerCase('ru-RU');
+        }
+
+        return toCapitalizedWord(word);
+    });
+}
+
+function normalizeAuthorDisplayName(authorRaw) {
+    const author = String(authorRaw || '').replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!author || !NORMALIZE_CASE_FIELDS) {
+        return author;
+    }
+
+    const initialsMatch = author.match(/^(.+?)\s+([A-ZА-ЯЁ]\.[A-ZА-ЯЁ]\.)$/);
+    if (initialsMatch) {
+        const surnameRaw = initialsMatch[1];
+        const initials = initialsMatch[2].toUpperCase();
+        const surname = surnameRaw
+            .split('-')
+            .map((part) => toCapitalizedWord(part))
+            .join('-');
+        return `${surname} ${initials}`;
+    }
+
+    return normalizeCasePreservingAbbreviations(author, false);
+}
+
 function isLikelyPersonName(value) {
     const text = String(value || '').replace(/\u00A0/g, ' ').trim();
     return /^[А-ЯЁA-Z][А-ЯЁA-Z-]+\s+[А-ЯЁA-Z]\.[А-ЯЁA-Z]\.$/.test(text);
@@ -731,12 +813,12 @@ class ElibraryPublicationMetadata {
 class BibTexEntry {
     constructor(author, title, year, url, doi, language, publisher, abstract = '') {
         this._author = author || '';
-        this._title = title || '';
+        this._title = normalizeCasePreservingAbbreviations(title || '', true);
         this._year = year || '';
         this._url = url || '';
         this._doi = doi || '';
         this._language = language || '';
-        this._publisher = publisher || '';
+        this._publisher = normalizeCasePreservingAbbreviations(publisher || '', false);
         this._abstract = abstract || '';
     }
 
@@ -763,7 +845,11 @@ class BibTexEntry {
     }
 
     get_authors_formatted() {
-        return this._author.map(author => author.replace(/*&nbsp;*/' ', ' ').replace(' ', ', ')).map(author => `{${author}}`).join(' and ');
+        return this._author
+            .map((author) => normalizeAuthorDisplayName(author))
+            .map((author) => author.replace(' ', ', '))
+            .map((author) => `{${author}}`)
+            .join(' and ');
     }
 
     get_fields() {
@@ -794,7 +880,7 @@ class BibTexEntry {
 class BibTexArticleEntry extends BibTexEntry {
     constructor(author, title, journal, year, volume, number, pages, url, doi, language, publisher, abstract = '') {
         super(author, title, year, url, doi, language, publisher, abstract);
-        this._journal = journal || '';
+        this._journal = normalizeCasePreservingAbbreviations(journal || '', false);
         this._volume = volume || '';
         this._number = number || '';
         this._pages = pages || '';
@@ -830,7 +916,7 @@ class BibTexArticleEntry extends BibTexEntry {
 class BibTexConferenceEntry extends BibTexEntry {
     constructor(author, title, booktitle, year, pages, url, doi, language, publisher, abstract = '') {
         super(author, title, year, url, doi, language, publisher, abstract);
-        this._booktitle = booktitle || '';
+        this._booktitle = normalizeCasePreservingAbbreviations(booktitle || '', false);
         this._pages = pages || '';
     }
 
