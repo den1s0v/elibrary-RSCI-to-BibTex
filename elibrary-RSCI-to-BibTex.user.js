@@ -463,7 +463,7 @@ function isProtectedAbbreviation(word) {
         return true;
     }
     // Keep cyrillic abbreviations except common service words.
-    if (/^[А-ЯЁ]{2,5}$/.test(word) && !isServiceWordUpper(word)) {
+    if (/^[А-ЯЁ]{2,4}$/.test(word) && !isServiceWordUpper(word)) {
         return true;
     }
     return false;
@@ -475,19 +475,23 @@ function normalizeCasePreservingAbbreviations(text, sentenceCase = false) {
     }
     let firstLexemeDone = false;
     return String(text || '').replace(/[A-Za-zА-ЯЁ]+(?:-[A-Za-zА-ЯЁ]+)*/g, (word) => {
-        const isUpper = word === word.toUpperCase();
-        if (!isUpper || isProtectedAbbreviation(word)) {
+        if (isProtectedAbbreviation(word)) {
             return word;
         }
 
         if (sentenceCase) {
+            const lowered = word.toLocaleLowerCase('ru-RU');
             if (!firstLexemeDone) {
                 firstLexemeDone = true;
-                return toCapitalizedWord(word);
+                return toCapitalizedWord(lowered);
             }
-            return word.toLocaleLowerCase('ru-RU');
+            return lowered;
         }
 
+        const isUpper = word === word.toUpperCase();
+        if (!isUpper) {
+            return word;
+        }
         return toCapitalizedWord(word);
     });
 }
@@ -880,7 +884,7 @@ class BibTexEntry {
 class BibTexArticleEntry extends BibTexEntry {
     constructor(author, title, journal, year, volume, number, pages, url, doi, language, publisher, abstract = '') {
         super(author, title, year, url, doi, language, publisher, abstract);
-        this._journal = normalizeCasePreservingAbbreviations(journal || '', false);
+        this._journal = normalizeCasePreservingAbbreviations(journal || '', true);
         this._volume = volume || '';
         this._number = number || '';
         this._pages = pages || '';
@@ -916,7 +920,7 @@ class BibTexArticleEntry extends BibTexEntry {
 class BibTexConferenceEntry extends BibTexEntry {
     constructor(author, title, booktitle, year, pages, url, doi, language, publisher, abstract = '') {
         super(author, title, year, url, doi, language, publisher, abstract);
-        this._booktitle = normalizeCasePreservingAbbreviations(booktitle || '', false);
+        this._booktitle = normalizeCasePreservingAbbreviations(booktitle || '', true);
         this._pages = pages || '';
     }
 
