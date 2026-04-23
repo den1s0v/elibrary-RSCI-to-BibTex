@@ -21,6 +21,11 @@ const STORE_ABSTRACT = true;
 
 // Нормализовывать регистр авторов/заголовков/журналов (оставляя аббревиатуры)
 const NORMALIZE_CASE_FIELDS = true;
+const KNOWN_CYRILLIC_ABBREVIATIONS = new Set([
+    'РАН', 'РФ', 'СССР', 'США', 'ООН',
+    'МГУ', 'СПБГУ', 'ВАК', 'УДК', 'ЭВМ',
+    'АСУ', 'ИТ', 'ИИ', 'БД', 'БЗ', 'РИНЦ',
+]);
 
 
 
@@ -462,8 +467,8 @@ function isProtectedAbbreviation(word) {
     if (/^[A-ZА-ЯЁ](\.[A-ZА-ЯЁ])+\.?$/.test(word)) {
         return true;
     }
-    // Keep cyrillic abbreviations except common service words.
-    if (/^[А-ЯЁ]{2,4}$/.test(word) && !isServiceWordUpper(word)) {
+    // Keep only known cyrillic abbreviations (avoid false positives like "НАУК").
+    if (/^[А-ЯЁ]{2,8}$/.test(word) && KNOWN_CYRILLIC_ABBREVIATIONS.has(word)) {
         return true;
     }
     return false;
@@ -473,27 +478,48 @@ function normalizeCasePreservingAbbreviations(text, sentenceCase = false) {
     if (!NORMALIZE_CASE_FIELDS) {
         return text || '';
     }
-    let firstLexemeDone = false;
-    return String(text || '').replace(/[A-Za-zА-ЯЁ]+(?:-[A-Za-zА-ЯЁ]+)*/g, (word) => {
-        if (isProtectedAbbreviation(word)) {
-            return word;
-        }
+    const source = String(text || '');
+    const wordRegex = /[A-Za-zА-ЯЁ]+(?:-[A-Za-zА-ЯЁ]+)*/g;
 
-        if (sentenceCase) {
-            const lowered = word.toLocaleLowerCase('ru-RU');
-            if (!firstLexemeDone) {
-                firstLexemeDone = true;
-                return toCapitalizedWord(lowered);
+    if (!sentenceCase) {
+        return source.replace(wordRegex, (word) => {
+            if (isProtectedAbbreviation(word)) {
+                return word;
             }
-            return lowered;
+            const isUpper = word === word.toUpperCase();
+            if (!isUpper) {
+                return word;
+            }
+            return toCapitalizedWord(word);
+        });
+    }
+
+    let result = '';
+    let lastIndex = 0;
+    let shouldCapitalizeNext = true;
+    let match;
+
+    while ((match = wordRegex.exec(source)) !== null) {
+        const between = source.slice(lastIndex, match.index);
+        result += between;
+        if (between.includes('. ')) {
+            shouldCapitalizeNext = true;
         }
 
-        const isUpper = word === word.toUpperCase();
-        if (!isUpper) {
-            return word;
+        const word = match[0];
+        if (isProtectedAbbreviation(word)) {
+            result += word;
+        } else {
+            const lowered = word.toLocaleLowerCase('ru-RU');
+            result += shouldCapitalizeNext ? toCapitalizedWord(lowered) : lowered;
         }
-        return toCapitalizedWord(word);
-    });
+
+        shouldCapitalizeNext = false;
+        lastIndex = wordRegex.lastIndex;
+    }
+
+    result += source.slice(lastIndex);
+    return result;
 }
 
 function normalizeAuthorDisplayName(authorRaw) {
